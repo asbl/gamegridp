@@ -30,6 +30,7 @@ class GameGrid(container.Container):
         self.speed = 60
         self.active_actor = None
         self.image_action = None
+        self.is_static = False
         # private
         self._renderer = image_renderer.ImageRenderer()
         self._show_info_overlay = False
@@ -307,7 +308,9 @@ class GameGrid(container.Container):
         if self.__running:
             self.__act_all()
         self.__frame = self.__frame + 1
-        if self.__frame == 60:
+        for actor in self.actors:
+            actor.update()
+        if self.__frame == 100:
             self.__frame = 0
         self.__clock.tick(60)
 

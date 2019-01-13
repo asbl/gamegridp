@@ -9,7 +9,6 @@ import logging
 import math
 import pygame
 from gamegridp import image_renderer
-from gamegridp import position
 
 
 class Actor(pygame.sprite.DirtySprite):
@@ -18,33 +17,32 @@ class Actor(pygame.sprite.DirtySprite):
 
     def __init__(self, grid, position: tuple, **kwargs):
         super().__init__(kwargs)
-        # public
-        self.image_actions = ["flip", "rotate"]
-        self.is_static = False
-        self.is_animated = False
-        self.size = (40, 40)  # Tuple with size
-        self.color = (200, 200, 0)
-        self.position = position
-        self.is_blocking = False
-        self.direction = 0
-        self.__actor_id = Actor.actor_count + 1
-        Actor.actor_count += 1
         # private
         self._grid = grid
         self._renderer = image_renderer.ImageRenderer()
         self._image = self._renderer.get_image()
+        #protected
         # protected
         self._flip_x = False
         self.__is_in_grid = False
         self.__is_at_border = False
         self.__is_touching_borders = False
-        self.__is_colliding = False
+        self.is_colliding = False
         self.__collision_partners = pygame.sprite.Group()
-        self.__colliding_actors = None
-        self.__update_status()
+        self.__colliding_actors = []
+        # public
+        self.animation_speed = 60
+        self.image_actions = ["flip", "rotate"]
+        self.is_static = False
+        self.is_animated = False
+        self._size = (40, 40)  # Tuple with size
+        self._position = position
+        self.direction = 0
+        self.__actor_id = Actor.actor_count + 1
+        Actor.actor_count += 1
         self._grid.add_actor(self, position)
-        self.dirty = 1
         self.setup()
+        self.changed()
 
     def add_collision_partner(self, partner):
         self.__collision_partners.add(partner)
@@ -93,7 +91,7 @@ class Actor(pygame.sprite.DirtySprite):
     def direction(self, value):
         direction = self._value_to_direction(value)
         self._direction = direction
-        self.dirty = 1
+        self.changed()
 
     @property
     def size(self):
@@ -106,7 +104,7 @@ class Actor(pygame.sprite.DirtySprite):
     @size.setter
     def size(self, value):
         self._size = value
-        self.dirty = 1
+        self.changed()
 
     def animate(self):
         """
@@ -122,7 +120,7 @@ class Actor(pygame.sprite.DirtySprite):
     @position.setter
     def position(self, value: tuple):
         self._position = value
-        self.dirty = 1
+        self.changed()
 
     @property
     def class_name(self) -> str:
@@ -185,7 +183,6 @@ class Actor(pygame.sprite.DirtySprite):
         :param x: Die x-Koordinate die gesetzt werden soll.
         """
         self.position = (x, self.position[1])
-        self.dirty = 1
 
     @property
     def y(self):
@@ -203,7 +200,6 @@ class Actor(pygame.sprite.DirtySprite):
         :param y: Die y-Koordinate die gesetzt werden soll.
         """
         self.position = (self.position[0], y)
-        self.dirty = 1
 
     def setup(self):
         """
@@ -235,17 +231,15 @@ class Actor(pygame.sprite.DirtySprite):
         self.direction = direction
         return self.direction
 
-    def move_to(self, destination: tuple):
-        self.position = destination
 
     def move_back(self, distance: int = 1):
         destination = self.look_back(distance)
-        return self.move_to(destination)
+        self.position = destination
 
     def move(self, distance=1, direction = "forward"):
         self.direction = self._value_to_direction(direction)
         destination = self.look_forward(distance)
-        return self.move_to(destination)
+        self.position = destination
 
     def look(self, distance: int = 1, direction="forward"):
         direction = self._value_to_direction(direction)
@@ -314,6 +308,10 @@ class Actor(pygame.sprite.DirtySprite):
     def update(self):
         self._next_sprite()
 
+    def changed(self):
+        self.dirty = 1
+        self.__update_status()
+
     def _value_to_direction(self, value) -> int:
         if value == "right":
             value = 0
@@ -351,11 +349,17 @@ class Actor(pygame.sprite.DirtySprite):
             self.__is_at_border = at_border
             self._grid.get_event("at_border", self)
         colliding = self.grid.is_colliding(self)
-        if colliding != self.__is_colliding:
+        if colliding != self.is_colliding:
+            print("colliding.. send event")
             colliding_actors = self._grid.get_colliding_actors(self)
-            self.__is_colliding = colliding
+            print(colliding_actors)
+            self.is_colliding = colliding
             self.__collision_partners = None
             for col_partner in colliding_actors:
                 if col_partner not in self.__colliding_actors:
                     col_partner.__colliding_actors.append(self)
-                    self._grid.get_event("collision", (self, col_partner))
+                    print("send event")
+                    self.get_event("collision", (self, col_partner))
+
+    def get_event(self, event, data):
+        pass

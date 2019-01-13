@@ -9,17 +9,17 @@ class CellGrid(gamegrid.GameGrid):
     Das Cell-Grid ist gedacht für Grids, deren Zellen größer als 1 Pixel sind.
     """
     def __init__(self, title, **kwargs):
-        self._dynamic_collision_actors = defaultdict(list)
-        self._static_collision_actors = defaultdict(list)
+        self._dynamic_actors_dict = defaultdict(list)
+        self._static_actors_dict = defaultdict(list)
         self._dynamic_actors = []
         super().__init__(title, **kwargs)
 
-    def _call_collisions(self):
+    def update_actor_positions(self):
         # update the dynamic_collison dict before calling the collisions
-        self._dynamic_collision_actors.clear()
+        self._dynamic_actors_dict.clear()
         for actor in self._dynamic_actors:
-            self._dynamic_collision_actors[(actor.get_x(), actor.get_y())].append(actor)
-        super()._call_collisions()
+            x, y = actor.position[0], actor.position[1]
+            self._dynamic_actors_dict[(x, y)].append(actor)
 
     def get_all_collisions_for_actor(self, actor):
         """
@@ -35,12 +35,20 @@ class CellGrid(gamegrid.GameGrid):
         -------
 
         """
-        collision_actors = self.get_all_actors_in_cell(actor.cell)
+        x, y = actor.position[0], actor.position[1]
+        collision_actors = self.get_all_actors_at_position(x, y)
         if actor in collision_actors:
             collision_actors.remove(actor)
         return collision_actors
 
-    def get_all_actors_in_cell(self, cell: tuple, class_name: str = "") -> list:
+    def is_colliding(self, actor):
+        colliding_actors = self.get_all_collisions_for_actor(actor)
+        if colliding_actors:
+            return True
+        else:
+            return False
+
+    def get_colliding_actors(self, actor) -> list:
         """
         Gebe alle Akteure an den angegebenen Zellenkoordinaten zurück
 
@@ -48,25 +56,32 @@ class CellGrid(gamegrid.GameGrid):
         :param class_name: Den Klassennamen, nachdem gefiltert werden soll
         :return: Eine Liste aller Akteure (mit der angegebenen Klasse) an der Position.
         """
-        actors_in_cell = []
-        try:
-            if self._dynamic_collision_actors[cell[0], cell[1]]:
-                actors_in_cell.extend(self._dynamic_collision_actors[(cell[0], cell[1])])
-            if self._static_collision_actors[cell[0], cell[1]]:
-                actors_in_cell.extend(self._static_collision_actors[(cell[0], cell[1])])
-        except:
-            pass
-        if class_name is not "":
-            # Filter list by class_name
-            actors_in_cell = [actor for actor in actors_in_cell if actor.__class__.__name__ == class_name]
-        return actors_in_cell
+        self.update_actor_positions()
+        x, y = actor.position[0], actor.position[1]
+        colliding_actors = self.get_all_actors_at_position(x,y)
+        if actor in colliding_actors:
+            colliding_actors.remove(actor)
+        return colliding_actors
+
+    def get_all_actors_at_position(self, x, y):
+        self.update_actor_positions()
+        actors = []
+        if self.is_in_grid((x, y)):
+            if self._dynamic_actors_dict[x, y]:
+                actors.extend(self._dynamic_actors_dict[(x, y)])
+            if self._static_actors_dict[x, y]:
+                actors.extend(self._static_actors_dict[(x, y)])
+        return actors
+
+    @staticmethod
+    def filter_actor_list(self, list, class_name):
+        return [actor for actor in list if actor.__class__.__name__ == class_name]
 
     def remove_actor(self, actor):
         if actor in self._dynamic_actors:
             self._dynamic_actors.remove(actor)
-        if actor in  self._static_collision_actors[(actor.get_x(), actor.get_y())]:
-            self._static_collision_actors[(actor.get_x(), actor.get_y())].remove(actor)
-        self._logging.info("Removed"+str(actor))
+        if actor in  self._static_actors_dict[(actor.x, actor.y)]:
+            self._static_actors_dict[(actor.x, actor.y)].remove(actor)
         super().remove_actor(actor)
 
     def remove_actors_from_cell(self, location):
@@ -80,23 +95,23 @@ class CellGrid(gamegrid.GameGrid):
         -------
 
         """
-        for actor in self._dynamic_collision_actors[location[0], location[1]]:
+        for actor in self._dynamic_actors_dict[location[0], location[1]]:
             self.remove_actor(actor)
-        for actor in self._static_collision_actors[location[0], location[1]]:
+        for actor in self._static_actors_dict[location[0], location[1]]:
             self.remove_actor(actor)
 
     def add_actor(self, actor, position=None):
         if actor.is_static:
-            self._static_collision_actors[(actor.get_x(), actor.get_y())].append(actor)
+            self._static_actors_dict[(actor.get_x(), actor.get_y())].append(actor)
         else:
             self._dynamic_actors.append(actor)
         super().add_actor(actor, position)
 
     def update_actor(self, actor, attribute, value):
         if attribute == "is_static" and value is True:
-            self._static_collision_actors[(actor.get_x(), actor.get_y())].append(actor)
-            if actor in self._dynamic_collision_actors:
-                self._dynamic_collision_actors.remove(actor)
+            self._static_actors_dict[(actor.get_x(), actor.get_y())].append(actor)
+            if actor in self._dynamic_actors_dict:
+                self._dynamic_actors_dict.remove(actor)
         else:
             self._dynamic_actors.append(actor)
         super()._update_actor(actor, attribute, value)
