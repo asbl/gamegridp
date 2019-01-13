@@ -4,11 +4,10 @@ import pygame
 
 class Container(object):
 
-    def __init__(self, size: tuple = 0, position="right"):
+    def __init__(self, size = 0):
         self.dirty = 1
         self.background_color = (255,255,255)
         self.size = size
-        self.position = position
         # Not mutable
         self._window = None  # Set in add_to_window
         self._width = 0  # Set in add_to_window
@@ -72,5 +71,5 @@ class Container(object):
     def window_docking_position(self):
         return self._window_docking_position
 
-    def updatE(self):
+    def update(self):
         pass

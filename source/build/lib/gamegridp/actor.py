@@ -27,7 +27,7 @@ class Actor(pygame.sprite.DirtySprite):
         self.__is_in_grid = False
         self.__is_at_border = False
         self.__is_touching_borders = False
-        self.is_colliding = False
+        self.__is_colliding = False
         self.__collision_partners = pygame.sprite.Group()
         self.__colliding_actors = []
         # public
@@ -138,9 +138,6 @@ class Actor(pygame.sprite.DirtySprite):
         Stopt die Animation eines Akteurs.
         """
         self.is_animated = False
-
-    def is_at_border(self):
-        return self.grid.is_at_border(actor = self)
 
     def flip_x(self):
         """
@@ -340,26 +337,36 @@ class Actor(pygame.sprite.DirtySprite):
         return self._grid
 
     def __update_status(self):
-        in_grid = self.grid.is_in_grid(self.position)
+        in_grid = self.is_in_grid()
         if in_grid != self.__is_in_grid:
             self.__is_in_grid = in_grid
             self._grid.get_event("in_grid", self)
-        at_border = self.grid.is_at_border(self)
+        at_border = self.is_at_border()
         if at_border != self.__is_at_border:
             self.__is_at_border = at_border
             self._grid.get_event("at_border", self)
-        colliding = self.grid.is_colliding(self)
-        if colliding != self.is_colliding:
-            print("colliding.. send event")
-            colliding_actors = self._grid.get_colliding_actors(self)
+        colliding = self.is_colliding()
+        if colliding != self.__is_colliding:
+            colliding_actors = self.get_colliding_actors()
             print(colliding_actors)
-            self.is_colliding = colliding
+            self.__is_colliding = colliding
             self.__collision_partners = None
             for col_partner in colliding_actors:
                 if col_partner not in self.__colliding_actors:
                     col_partner.__colliding_actors.append(self)
-                    print("send event")
                     self.get_event("collision", (self, col_partner))
+
+    def is_colliding(self):
+        return self.grid.is_colliding(self)
+
+    def get_colliding_actors(self):
+        return self._grid.get_colliding_actors(self)
+
+    def is_at_border(self):
+        return self.grid.is_at_border(self)
+
+    def is_in_grid(self):
+        return self.grid.is_in_grid(self.position)
 
     def get_event(self, event, data):
         pass

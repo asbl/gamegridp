@@ -5,8 +5,8 @@ import pygame
 
 class Toolbar(gamegridp.Container):
 
-    def __init__(self, size=100, position="right"):
-        super().__init__(size, position)
+    def __init__(self, size=100):
+        super().__init__(size)
         self._width = size
         self.elements = []
         self.dirty = 1

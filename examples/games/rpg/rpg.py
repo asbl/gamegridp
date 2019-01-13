@@ -22,19 +22,21 @@ class MyGrid(gamegridp.CellGrid, gamegridp.GUIGrid,  gamegridp.AudioGrid):
         Door(self, (6, 2))
         Player(self, (8, 2))
         self.play_music("rpgsounds/bensound-betterdays.mp3")
+        toolbar = gamegridp.Toolbar()
+        self._window.add_container(toolbar, "right")
+        console = gamegridp.Toolbar()
+        self._window.add_container(console, "bottom")
         self.run()
 
 class Player(gamegridp.Actor):
     def setup(self):
-        self._is_rotatable = False
-        self.set_image("rpgimages/knight.png")
+        self.add_image("rpgimages/knight.png")
         self.inventory=[]
 
     def act(self):
         pass
 
-
-    def listen(self, event, data):
+    def get_event(self, event, data):
         if event == "key_down":
             if "W" in data:
                 self.move_up()
@@ -46,7 +48,7 @@ class Player(gamegridp.Actor):
                 self.move_right()
         # Wird auf den Button Torch gedrückt?
         elif event == "button" and data=="Fackel":
-            fireplace = self.get_actor_at_my_location("Fireplace")
+            fireplace = self.get_colliding_actors("Fireplace")
             if fireplace:
                 self.grid.console.print("Du zündest die Feuerstelle an.")
                 fireplace.burn()
@@ -76,19 +78,19 @@ class Player(gamegridp.Actor):
 class Wall(gamegridp.Actor):
     def setup(self):
         self.is_blocking = True
-        self.set_image("rpgimages/wall.png")
+        self.add_image("rpgimages/wall.png")
 
 class Grass(gamegridp.Actor):
     def setup(self):
-        self.set_image("rpgimages/grass.png")
+        self.add_image("rpgimages/grass.png")
 
 class Torch(gamegridp.Actor):
     def setup(self):
-        self.set_image("rpgimages/torch.png")
+        self.add_image("rpgimages/torch.png")
 
 class Fireplace(gamegridp.Actor):
     def setup(self):
-        self.set_image("rpgimages/fireplace_0.png")
+        self.add_image("rpgimages/fireplace_0.png")
         self.burning = False
         self.is_static = True
 
@@ -103,21 +105,18 @@ class Fireplace(gamegridp.Actor):
 
 class Door(gamegridp.Actor):
     def setup(self):
-        self.set_image("rpgimages/door_closed.png")
+        self.add_image("rpgimages/door_closed.png")
         self.is_blocking = True
         self.closed = True
         self.is_static = True
 
     def open(self):
         if self.closed == True:
-            self.set_image("rpgimages/door_open.png")
+            self.add_image("rpgimages/door_open.png")
             self.grid.play_sound("rpgsounds/olddoor.wav")
             self.closed = False
             self.is_blocking = False
 
 
-MyGrid.log()
-mygrid = MyGrid("My Grid", cell_size=20, columns=30, rows=20,
-                margin=1, toolbar=True, console = True, actionbar = False)
-print(mygrid.title)
-mygrid.show()
+my_grid = MyGrid("My Grid", cell_size=20, columns=30, rows=20, margin=1)
+my_grid.show()
