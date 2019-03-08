@@ -49,13 +49,6 @@ class CellGrid(gamegrid.GameGrid):
             return False
 
     def get_colliding_actors(self, actor) -> list:
-        """
-        Gebe alle Akteure an den angegebenen Zellenkoordinaten zurück
-
-        :param cell: Die Zellenkordinaten als Tupel (x,y)
-        :param class_name: Den Klassennamen, nachdem gefiltert werden soll
-        :return: Eine Liste aller Akteure (mit der angegebenen Klasse) an der Position.
-        """
         self.update_actor_positions()
         x, y = actor.position[0], actor.position[1]
         colliding_actors = self.get_all_actors_at_position(x,y)
@@ -72,10 +65,6 @@ class CellGrid(gamegrid.GameGrid):
             if self._static_actors_dict[x, y]:
                 actors.extend(self._static_actors_dict[(x, y)])
         return actors
-
-    @staticmethod
-    def filter_actor_list(self, list, class_name):
-        return [actor for actor in list if actor.__class__.__name__ == class_name]
 
     def remove_actor(self, actor):
         if actor in self._dynamic_actors:

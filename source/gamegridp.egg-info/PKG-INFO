@@ -7,18 +7,19 @@ Author: Andreas Siebel
 Author-email: andreas.siebel@it-teaching.de
 License: OSI Approved :: MIT License
 Download-URL: https://github.com/asbl/gamegridp
-Description: GameGridP
+Description: gamegridp
         ---------
         
+        **Achtung**: Zur Zeit wird gamegridp überarbeitet. Der alte lauffähige Code findet sich im Rep gamegridp_old
         
-        GameGridP ist eine in Python programmierte 2D-Grafikengine die für Bildungszwecke gedacht ist.
+        gamegridp ist eine in Python programmierte 2D-Grafikengine die für Bildungszwecke gedacht ist.
         
         Viele Konzepte wurden von  [JGameGrid](http://www.aplu.ch/home/apluhomex.jsp?site=45)_
         bzw. [Greenfoot](https://www.greenfoot.org/door) übernommen. Im Gegensatz zu Greenfoot bietet
-        gamegridp keine grafische Benutzeroberfläche.
+        gamegridp keine grafische Benutzeroberfläche, sondern ist ein Framework.
         
         Eigenschaften
-          * GameGridP unterstützt sowohl Pixel-basierte Spiele als auch Spiele mit 
+          * gamegridp unterstützt sowohl Pixel-basierte Spiele als auch Spiele mit 
           quadratischen Zellen (z.B. Rouge-Likes)
           * Einfaches Erstellen von Animationen
           * Musik und Soundeffekte

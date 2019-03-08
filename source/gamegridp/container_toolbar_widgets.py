@@ -2,29 +2,27 @@ import os
 from gamegridp import container
 import pygame
 
-class ToolbarElement():
-    def __init__(self, width, height, background_color):
-        package_directory = os.path.dirname(os.path.abspath(__file__))
+class ToolbarWidget():
+    def __init__(self, width=0, height=0,):
         self.myfont = pygame.font.SysFont("monospace", 15)
-        self.background_color = background_color
+        self.background_color = (255, 255, 255)
         self.event = "no event"
         self._dirty = 1
-        self._init_state()
         self.width = width
         self.height = height
         self.parent = None
-        self.background_color = background_color
-
-    def _init_state(self):
+        self.clear()
+        self.dirty = 1
+        self.parent = None
         self._text = ""
         self._image = None
         self._border = False
         self._text_padding = 5
         self._img_path = None
+        self.setup()
 
-    def setup(self, parent):
-        self.parent = parent
-        self.dirty = 1
+    def setup(self):
+        pass
 
     def get_surface(self):
         return self.surface
@@ -76,16 +74,12 @@ class ToolbarElement():
         self.border = True
         self.dirty = 1
 
-class ToolbarButton(ToolbarElement):
 
-    def __init__(self, width, height, text, img_path, color=(255,255,255), border=(255,255,255)):
-        super().__init__(width, height, color)
-        self.surface.fill(color)
-        if img_path is not None:
-            self.set_image(img_path)
-            self.set_text(text, 25)
-        else:
-            self.set_text(text,2)
+class ToolbarButton(ToolbarWidget):
+
+    def __init__(self, text, **kwargs):
+        super().__init__(**kwargs)
+        self.set_text(text)
         self.event = "button"
         self.data = text
 
@@ -93,7 +87,7 @@ class ToolbarButton(ToolbarElement):
         return self.event, self.data
 
 
-class ToolbarLabel(ToolbarElement):
+class ToolbarLabel(ToolbarWidget):
 
     def __init__(self, width, height, text, img_path, color=(0,255,255), border=(255,255,255)):
         super().__init__(width, height, color)

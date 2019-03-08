@@ -7,9 +7,8 @@ class PixelGrid(gamegrid.GameGrid):
     für Spiele in denen Pixelgenaue Informationen wichtig sind.
     """
 
-    def __init__(self, title, **kwargs):
-        super().__init__(title, **kwargs)
-
+    def __init__(self, cell_size=1, columns=40, rows=40, margin=0):
+        super().__init__(cell_size=cell_size, columns=columns, rows=rows, margin=margin)
 
     def _init_collisions(self):
         self._collision_partners = dict
@@ -31,14 +30,12 @@ class PixelGrid(gamegrid.GameGrid):
 
     def test_collision(self, actor1, actor2) -> bool:
         if actor1 is not actor2:
-            print(actor1)
-            print(actor1.grid)
             if actor1.rect.colliderect(actor2.rect):
                 return True
             else:
                 return False
 
-    def destination_is_at_border(self, destination, actor):
+    def is_at_border(self, rect):
         """
         Überprüfe, ob das Rechteck über den entsprechenden Rand hinausragt
 
@@ -47,46 +44,29 @@ class PixelGrid(gamegrid.GameGrid):
         :return: True, falls Ja, ansonsten False
         """
         borders = []
-        rect = actor.rect
-        rect = self.map_rect_to_cell(destination, actor.rect)
         if rect.topleft[0] <= 0:
             borders.append("left")
-        if rect.topleft[1] + rect.height >= self.container_height:
+        if rect.topleft[1] + rect.height >= self.height:
             borders.append("bottom")
-        if rect.topleft[0] + rect.width >= self.container_width:
+        if rect.topleft[0] + rect.width >= self.width:
             borders.append("right")
         if rect.topleft[1] <= 0:
             borders.append("top")
         return borders
 
-    def is_at_border(self, actor):
-        borders = self.destination_is_at_border(actor.cell, actor)
-        if borders:
-            return True
-        else:
-            return False
-
-    def get_touching_borders(self, actor) -> list:
-        borders = self.destination_is_at_border(actor.cell, actor)
+    def get_touching_borders(self, rect) -> list:
+        borders = []
+        if rect.topleft[0] <= 0:
+            borders.append("left")
+        if rect.topleft[1] + rect.height >= self.height:
+            borders.append("bottom")
+        if rect.topleft[0] + rect.width >= self.width:
+            borders.append("right")
+        if rect.topleft[1] <= 0:
+            borders.append("top")
         return borders
 
-    def destination_is_in_grid(self, destination, actor):
-        rect = actor.rect
-        if rect.topleft[0] < 0:
-            return False
-        if rect.topleft[1] < 0:
-            return False
-        if rect.topleft[0] + rect.width > self.container_width:
-            return False
-        if rect.topleft[1] + rect.height > self.container_height:
-            return False  # rectangle is not in grid
-        else:
-            return True  # rectangle is in grid
-
-    def is_in_grid(self, actor):
-        return(self.destination_is_in_grid(actor.cell, actor))
-
     def is_valid_move(self, destination_cell, actor = None):
-        if not self.is_in_grid(destination_cell, actor):
+        if not self.is_in_grid(destination_cell):
             return False
         return True

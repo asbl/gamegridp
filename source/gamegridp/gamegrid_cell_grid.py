@@ -8,11 +8,11 @@ class CellGrid(gamegrid.GameGrid):
     """
     Das Cell-Grid ist gedacht für Grids, deren Zellen größer als 1 Pixel sind.
     """
-    def __init__(self, title, **kwargs):
+    def __init__(self, cell_size=1, columns=40, rows=40, margin=0):
+        super().__init__(cell_size = cell_size, columns= columns, rows = rows, margin = margin)
         self._dynamic_actors_dict = defaultdict(list)
         self._static_actors_dict = defaultdict(list)
         self._dynamic_actors = []
-        super().__init__(title, **kwargs)
 
     def update_actor_positions(self):
         # update the dynamic_collison dict before calling the collisions
@@ -21,50 +21,17 @@ class CellGrid(gamegrid.GameGrid):
             x, y = actor.position[0], actor.position[1]
             self._dynamic_actors_dict[(x, y)].append(actor)
 
-    def get_all_collisions_for_actor(self, actor):
-        """
-        Gibt einen Actor zurück, dessen Bounding-Boxes mit dem angegebenen Akteur
-        kollidieren.
-
-        Parameters
-        ----------
-        actor Ein Actor vom angegebenen Klassennahmen, der mit dem angegebenen Actor kollidiert.
-        class_name Den Klassennamen nach dem gefiltert werden soll.
-
-        Returns
-        -------
-
-        """
-        x, y = actor.position[0], actor.position[1]
-        collision_actors = self.get_all_actors_at_position(x, y)
-        if actor in collision_actors:
-            collision_actors.remove(actor)
-        return collision_actors
-
-    def is_colliding(self, actor):
-        colliding_actors = self.get_all_collisions_for_actor(actor)
-        if colliding_actors:
-            return True
-        else:
-            return False
-
     def get_colliding_actors(self, actor) -> list:
-        """
-        Gebe alle Akteure an den angegebenen Zellenkoordinaten zurück
-
-        :param cell: Die Zellenkordinaten als Tupel (x,y)
-        :param class_name: Den Klassennamen, nachdem gefiltert werden soll
-        :return: Eine Liste aller Akteure (mit der angegebenen Klasse) an der Position.
-        """
         self.update_actor_positions()
         x, y = actor.position[0], actor.position[1]
-        colliding_actors = self.get_all_actors_at_position(x,y)
+        colliding_actors = self.get_all_actors_at_position((x, y))
         if actor in colliding_actors:
             colliding_actors.remove(actor)
         return colliding_actors
 
-    def get_all_actors_at_position(self, x, y):
+    def get_all_actors_at_position(self, position):
         self.update_actor_positions()
+        x, y = position[0], position[1]
         actors = []
         if self.is_in_grid((x, y)):
             if self._dynamic_actors_dict[x, y]:
@@ -72,10 +39,6 @@ class CellGrid(gamegrid.GameGrid):
             if self._static_actors_dict[x, y]:
                 actors.extend(self._static_actors_dict[(x, y)])
         return actors
-
-    @staticmethod
-    def filter_actor_list(self, list, class_name):
-        return [actor for actor in list if actor.__class__.__name__ == class_name]
 
     def remove_actor(self, actor):
         if actor in self._dynamic_actors:
@@ -166,9 +129,9 @@ class CellGrid(gamegrid.GameGrid):
 
     def is_in_grid(self, position):
         x, y = position[0], position[1]
-        if x > self._grid_columns - 1:
+        if x > self.columns - 1:
             return False
-        elif y > self._grid_rows - 1:
+        elif y > self.rows - 1:
             return False
         elif x < 0 or y < 0:
             return False
@@ -176,9 +139,9 @@ class CellGrid(gamegrid.GameGrid):
             return True
 
     def is_at_border(self, actor):
-        if actor.x == self._grid_columns - 1:
+        if actor.x == self.columns - 1:
             return "right"
-        elif actor.y == self._grid_rows - 1:
+        elif actor.y == self.rows - 1:
             return "bottom"
         elif actor.x == 0:
             return "left"

@@ -5,9 +5,9 @@ Created on Mon Apr 16 21:50:48 2018
 @author: asieb
 """
 
-import logging
 import math
 import pygame
+import gamegridp
 from gamegridp import image_renderer
 
 
@@ -361,6 +361,10 @@ class Actor(pygame.sprite.DirtySprite):
 
     def get_colliding_actors(self):
         return self._grid.get_colliding_actors(self)
+
+    def is_colliding_with(self, class_name):
+        colliding_actors = self._grid.get_colliding_actors(self)
+        return gamegridp.GameGrid.filter_actor_list(colliding_actors, class_name)
 
     def is_at_border(self):
         return self.grid.is_at_border(self)

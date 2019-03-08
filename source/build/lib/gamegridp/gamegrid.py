@@ -56,6 +56,10 @@ class GameGrid(container.Container):
         self.setup()
         self.dirty = 1
 
+    @staticmethod
+    def filter_actor_list(list, class_name):
+        return [actor for actor in list if actor.__class__.__name__ == class_name]
+
     def _init_grid_size(self, cell_size, margin, columns, rows, ):
         # grid and grid-dimensions
         for row in range(rows):

@@ -1,11 +1,12 @@
 import gamegridp
 
+
 class MyGrid(gamegridp.CellGrid, gamegridp.GUIGrid,  gamegridp.AudioGrid):
     """My Grid with custom setup method."""
     def setup(self):
         for i in range(self.rows):
             for j in range(self.columns):
-                Grass(self,(j,i))
+                Grass(self, (j,i))
         Wall(self,(0,4))
         Wall(self, (1, 4))
         Wall(self, (2, 4))
@@ -53,7 +54,7 @@ class Player(gamegridp.Actor):
                 self.grid.console.print("Du zündest die Feuerstelle an.")
                 fireplace.burn()
         # wird eine Fackel gefunden?
-        torch = self.get_actor_at_my_location("Torch")
+        torch = self.is_colliding_with("torch")
         if torch:
             message = "Du findest eine Fackel. Möchtest du sie aufheben?"
             choices = ["Ja", "Nein"]
@@ -65,7 +66,7 @@ class Player(gamegridp.Actor):
                 self.grid.toolbar.add_button("Fackel", "rpgimages/torch.png")
         # Prallt der Held auf eine Tür?
         door = self.get_actor_in_front("Door")
-        print(door)
+        self.look_forward(is_there_a="Door")
         if door:
             if door.closed:
                 message = "Die Tür ist geschlossen... möchtest du sie öffnen"

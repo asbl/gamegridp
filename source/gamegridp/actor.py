@@ -5,50 +5,49 @@ Created on Mon Apr 16 21:50:48 2018
 @author: asieb
 """
 
-import logging
 import math
 import pygame
+import gamegridp
 from gamegridp import image_renderer
+from typing import Type
 
 
 class Actor(pygame.sprite.DirtySprite):
 
     actor_count = 0
 
-    def __init__(self, grid, position: tuple, **kwargs):
-        super().__init__(kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         # private
-        self._grid = grid
         self._renderer = image_renderer.ImageRenderer()
         self._image = self._renderer.get_image()
-        #protected
+        self._size = (40, 40)  # Tuple with size
         # protected
-        self._flip_x = False
+        self.__flip_x = False
         self.__is_in_grid = False
         self.__is_at_border = False
         self.__is_touching_borders = False
         self.__is_colliding = False
         self.__collision_partners = pygame.sprite.Group()
         self.__colliding_actors = []
-        # public
-        self.animation_speed = 60
-        self.image_actions = ["flip", "rotate"]
-        self.is_static = False
-        self.is_animated = False
-        self._size = (40, 40)  # Tuple with size
-        self._position = position
-        self.direction = 0
         self.__actor_id = Actor.actor_count + 1
         Actor.actor_count += 1
-        self._grid.add_actor(self, position)
-        self.setup()
-        self.changed()
+        # public
+        self.animation_speed = 60
+        self.image_actions = ["flip", "rotate", "scale"]
+        self.is_static = False
+        self.is_animated = False
+        self.direction = 0
+        self.grid = None
+
+    def add_image_action(self, value):
+        self.image_actions.append(value)
 
     def add_collision_partner(self, partner):
         self.__collision_partners.add(partner)
 
     def __str__(self):
-        return self.class_name +",id:" + str(self.__actor_id) + super().__str__()
+        return "Klasse: {0}; ID: {1}".format(self.class_name , self.__actor_id)
 
     @property
     def image(self):
@@ -56,14 +55,14 @@ class Actor(pygame.sprite.DirtySprite):
             return self._image
         else:
             image = self._renderer.get_image()
-            if self._grid.show_info_overlay:
+            if self.grid.show_info_overlay:
                 image = self._renderer.draw_direction_overlay(image, (255, 255, 0), self.direction)
             if "scale" in self.image_actions:
                 image = image_renderer.ImageRenderer.scale_image(image, self.size)
             if "center" in self.image_actions:
-                image = image_renderer.ImageRenderer.center_image(image, self.size, self._grid.cell_size)
+                image = image_renderer.ImageRenderer.center_image(image, self.size, self.grid.cell_size)
             if "flip" in self.image_actions:
-                image = image_renderer.ImageRenderer.flip_image(image, self._flip_x, False)
+                image = image_renderer.ImageRenderer.flip_image(image, self.__flip_x, False)
             if "rotate" in self.image_actions:
                 image = image_renderer.ImageRenderer.rotate_image(image, self.direction)
             return image
@@ -76,7 +75,7 @@ class Actor(pygame.sprite.DirtySprite):
         return self._renderer.add_image(img_path)
 
     def _next_sprite(self):
-        if self._grid.frame % self.animation_speed == 0:
+        if self.grid.frame % self.animation_speed == 0:
             self._renderer.next_sprite()
 
     @property
@@ -101,8 +100,7 @@ class Actor(pygame.sprite.DirtySprite):
         """
         return self._size
 
-    @size.setter
-    def size(self, value):
+    def set_size(self, value):
         self._size = value
         self.changed()
 
@@ -144,10 +142,10 @@ class Actor(pygame.sprite.DirtySprite):
         Spiegelt das Bild des Akteurs über die y-Achse.
         Der Akteur selbst wird dabei um 180° gedreht.
         """
-        if not self._flip_x:
-            self._flip_x = True
+        if not self.__flip_x:
+            self.__flip_x = True
         else:
-            self._flip_x = False
+            self.__flip_x = False
         self.turn_left(180)
 
     def set_bounding_box_size(self, value):
@@ -194,6 +192,7 @@ class Actor(pygame.sprite.DirtySprite):
     def y(self, y):
         """
         Setzt die y-Koordinate der Akteurs.
+
         :param y: Die y-Koordinate die gesetzt werden soll.
         """
         self.position = (self.position[0], y)
@@ -204,7 +203,7 @@ class Actor(pygame.sprite.DirtySprite):
         """
         pass
 
-    def turn_left(self, degrees: int = 90):
+    def turn_left(self, degrees: int = 90) -> int:
         """
         Dreht den Akteur um degrees Grad nach links.
 
@@ -212,95 +211,38 @@ class Actor(pygame.sprite.DirtySprite):
 
         :return: Die neue Richtung in Grad.
         """
+        print("turn left", self.direction, degrees)
         direction = self.direction + degrees
         self.direction = direction
+        print("turn left", self.direction, degrees)
         return self.direction
 
     def turn_right(self, degrees: int = 90):
         """
-        Dreht den Akteur um degrees Grad nach links.
+        Der Actor dreht sich um 90° nach rechts.
 
-        :param degrees: Die Gradzahl um die der Akteur gedreht wird.
+        :param degrees: Richtung in Grad.
 
-        :return: Die neue Richtung in Grad.
+        :return: Neue Richtung in Grad.
         """
         direction = self.direction - degrees
         self.direction = direction
         return self.direction
 
-
     def move_back(self, distance: int = 1):
-        destination = self.look_back(distance)
+        destination = self.look("forward", distance)
         self.position = destination
 
-    def move(self, distance=1, direction = "forward"):
+    def move(self, direction : str = "forward", distance : int = 1):
         self.direction = self._value_to_direction(direction)
-        destination = self.look_forward(distance)
+        destination = self.look(direction, distance)
         self.position = destination
 
-    def look(self, distance: int = 1, direction="forward"):
+    def look(self, direction: str = "forward", distance: int = 1) -> tuple:
         direction = self._value_to_direction(direction)
         x = round(self.position[0] + math.cos(math.radians(direction)) * distance)
         y = round(self.position[1] - math.sin(math.radians(direction)) * distance)
         return x, y
-
-    def look_forward(self, distance: int = 1) -> tuple:
-        return self.look(distance, "forward")
-
-    def look_back(self, distance: int = 1) -> tuple:
-        return  self.look(distance, "back")
-
-    def look_up(self, distance: int = 1) -> tuple:
-        return  self.look(distance, "up")
-
-    def look_down(self, distance: int = 1) -> tuple:
-        return  self.look(distance, "down")
-
-    def get_all_actors_in_my_cell(self, class_name : str) -> list:
-        """
-        Gets the first Actor in my cell
-
-        Parameters
-        ----------
-        class_name Filter actors by class_name
-
-        Returns
-        -------
-        Returns the found actor or None.
-        """
-        actors = self.grid.get_all_actors_in_cell(self.position, class_name)
-        if self in actors:
-            actors.remove(self)
-        return actors
-
-    def get_one_actor_in_my_cell(self, class_name : str) -> list:
-        """
-        Gets the first Actor in my cell
-        Parameters
-        ----------
-        class_name Filter actors by class name
-
-        Returns
-        -------
-        Returns the found actor or None.
-        """
-        actor_in_cell = self.grid.get_actor_in_cell(self.position, class_name)
-        return actor_in_cell
-
-    def get_actor_in_front(self, class_name, distance = 1) -> list:
-        """
-        Gets all Actors in front
-        Parameters
-        ----------
-        class_name Filter actors by class name
-        distance The distance of fields to look forward
-
-        Returns
-        -------
-        Returns the found actor or None.
-        """
-        actor_in_front = self.grid.get_actor_in_cell(self.look_forward(distance), class_name)
-        return actor_in_front
 
     def update(self):
         self._next_sprite()
@@ -332,41 +274,43 @@ class Actor(pygame.sprite.DirtySprite):
         self.grid.remove_actor(self)
         del (self)
 
-    @property
-    def grid(self):
-        return self._grid
-
     def __update_status(self):
-        in_grid = self.is_in_grid()
-        if in_grid != self.__is_in_grid:
-            self.__is_in_grid = in_grid
-            self._grid.get_event("in_grid", self)
-        at_border = self.is_at_border()
-        if at_border != self.__is_at_border:
-            self.__is_at_border = at_border
-            self._grid.get_event("at_border", self)
-        colliding = self.is_colliding()
-        if colliding != self.__is_colliding:
-            colliding_actors = self.get_colliding_actors()
-            print(colliding_actors)
-            self.__is_colliding = colliding
-            self.__collision_partners = None
-            for col_partner in colliding_actors:
-                if col_partner not in self.__colliding_actors:
-                    col_partner.__colliding_actors.append(self)
-                    self.get_event("collision", (self, col_partner))
+        try:
+            in_grid = self.is_in_grid()
+            if in_grid != self.__is_in_grid:
+                self.__is_in_grid = in_grid
+                self.grid.get_event("in_grid", self)
+            at_border = self.is_at_border()
+            if at_border != self.__is_at_border:
+                self.__is_at_border = at_border
+                self.grid.get_event("at_border", self)
+            colliding = self.is_colliding()
+            if colliding != self.__is_colliding:
+                colliding_actors = self.get_colliding_actors()
+                self.__is_colliding = colliding
+                self.__collision_partners = None
+                for col_partner in colliding_actors:
+                    if col_partner not in self.__colliding_actors:
+                        col_partner.__colliding_actors.append(self)
+                        self.get_event("collision", (self, col_partner))
+        except AttributeError:
+            pass
 
     def is_colliding(self):
         return self.grid.is_colliding(self)
 
-    def get_colliding_actors(self, class_name):
-        return self._grid.get_colliding_actors(self)
+    def get_colliding_actors(self):
+        return self.grid.get_colliding_actors(self)
+
+    def is_colliding_with(self, class_name):
+        colliding_actors = self._grid.get_colliding_actors(self)
+        return gamegridp.GameGrid.filter_actor_list(colliding_actors, class_name)
 
     def is_at_border(self):
-        return self.grid.is_at_border(self)
+        return self.grid.is_at_border(self.rect)
 
     def is_in_grid(self):
-        return self.grid.is_in_grid(self.position)
+        return self.grid.is_in_grid(self.rect)
 
     def get_event(self, event, data):
         pass

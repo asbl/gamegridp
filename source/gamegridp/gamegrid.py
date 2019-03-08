@@ -2,29 +2,19 @@
 """
 Created on Mon Apr 16 21:49:29 2018
 
-@author: asieb
+@author: Andreas Siebel
 """
-import logging
-import os
-import gamegridp.keys as keys
 import pygame
-import math
-import gamegridp
-import gamegridp.gamegrid_window as gamegrid_window
-import gamegridp.container as container
-import sys
-from gamegridp import image_renderer
+import window as gamegrid_window
+import container as container
+import image_renderer
 
 
 class GameGrid(container.Container):
 
-    def __init__(self, title, cell_size=32, columns=8, rows=8, margin=0):
+    def __init__(self, cell_size=1, columns=40, rows=40, margin=0):
+        super().__init__(self)
         pygame.init()
-        container.Container.__init__(self)
-        self._window = gamegrid_window.GameGridWindow(title)
-        self.__window_top_left_x = 0
-        self.__window_top_left_y = 0
-        self._window.add_container(self, "top_left")
         # public
         self.is_running = False
         self.speed = 60
@@ -39,11 +29,11 @@ class GameGrid(container.Container):
         self._key = 0
         self._animated = False
         self._grid = []
-        self._cell_size = cell_size
+        self.cell_size = cell_size
+        self._columns, self._rows = columns, rows
+        print("c,r in init:", self.columns, self.rows)
         self._cell_margin = margin
-        self._grid_columns = columns
-        self._grid_rows = rows
-        self._init_grid_size(cell_size, margin, columns, rows)
+        self.set_size(cell_size, columns, rows, margin)
         # protected
         self.dirty = 1
         self.__frame = 0
@@ -53,19 +43,59 @@ class GameGrid(container.Container):
         self.__running = True
         # Init graphics
         self._surface = pygame.Surface((self.width, self.height))
-        self.setup()
+        self.dirty = 1
+        self._window = gamegrid_window.GameGridWindow("Gamegrid")
+        self._window.add_container(self, "main")
+
+    def set_size(self,cell_size=1, columns=40, rows=40, margin=0):
+        self.cell_size = cell_size
+        self._columns = columns
+        self._rows = rows
+        self._cell_margin = margin
+        self._grid = []
+        print("c,r:", self.columns, self.rows)
+        for row in range(self.rows):
+            self._grid.append([])
+            for column in range(self.columns):
+                self._grid[row].append(0)
         self.dirty = 1
 
-    def _init_grid_size(self, cell_size, margin, columns, rows, ):
-        # grid and grid-dimensions
-        for row in range(rows):
-            self._grid.append([])
-            for column in range(columns):
-                self._grid[row].append(0)
-        self._width = self.columns * self._cell_size + (self.columns + 1) * self._cell_margin
-        self._height = self._grid_rows * self._cell_size + (self._grid_rows + 1) * self._cell_margin
-        self.size = (self._width, self._height)
+    @staticmethod
+    def filter_actor_list(list, class_name):
+        return [actor for actor in list if actor.__class__.__name__ == class_name]
 
+    def get_event(self, event, data = None):
+        pass
+
+    def is_colliding(self, actor) -> bool:
+        colliding_actors = self.get_colliding_actors(actor)
+        if colliding_actors:
+            return True
+        else:
+            return False
+
+    @property
+    def width(self):
+        if self.dirty == 0:
+            return self._container_width
+        else:
+            self._container_width = self.columns * self._cell_size + (self.columns + 1) * self._cell_margin
+            return self._container_width
+
+    @property
+    def height(self):
+        if self.dirty == 0:
+            return self._height
+        else:
+            self._height = self.rows * self._cell_size + (self.columns + 1) * self._cell_margin
+            return self._height
+
+
+
+    @property
+    def window(self):
+        """die Größe der einzelne Zellen des Grids."""
+        return self._window
 
     @property
     def cell_size(self):
@@ -85,26 +115,18 @@ class GameGrid(container.Container):
         self._cell_size = value
 
     @property
-    def speed(self):
-        return self._speed
-
-    @speed.setter
-    def speed(self, value):
-        self._speed = value
-
-    @property
     def rows(self):
         """
         returns the margin between cells
         """
-        return self._grid_rows
+        return self._rows
 
     @property
     def columns(self):
         """
         returns the margin between cells
         """
-        return self._grid_columns
+        return self._columns
 
     @property
     def actors(self):
@@ -135,14 +157,8 @@ class GameGrid(container.Container):
             return self._image
         else:
             image = self._renderer.get_image()
-            image = self._renderer.scale_image(image, self.size)
+            image = self._renderer.scale_image(image, (self.width, self.height))
             return image
-
-    def act(self):
-        """
-        Überschreibe diese Methode in deinen Kind-Klassen
-        """
-        pass
 
     def add_actor(self, actor, position):
         """
@@ -157,8 +173,9 @@ class GameGrid(container.Container):
 
         """
         self.actors.add(actor)
+        actor.position = position
+        actor.grid = self
         actor.dirty = 1
-
 
     def get_actors_by_pixel(self, coordinates):
         actors = []
@@ -179,7 +196,7 @@ class GameGrid(container.Container):
     def remove_actor(self, actor):
         if actor:
             self.actors.remove(actor)
-            actor._grid = None
+            actor.grid = None
 
     def remove_all_actors(self):
         """
@@ -204,12 +221,6 @@ class GameGrid(container.Container):
         Wenn das Spiel läuft handeln die Akteure mit jedem Durchlauf der mainloop genau einmal.
         """
         self.__running = True
-
-    def setup(self):
-        """
-        Sollte in deiner Kind-Klasse überschrieben werden.
-        """
-        pass
 
     def _pixel_to_cell(self, pos: tuple):
         """
@@ -257,7 +268,7 @@ class GameGrid(container.Container):
         return self._show_info_overlay
 
     @show_info_overlay.setter
-    def show_info_overlay(self, value : bool ):
+    def show_info_overlay(self, value: bool):
         if value is True:
             self._show_info_overlay = True
             self.dirty = 1
@@ -265,8 +276,17 @@ class GameGrid(container.Container):
             self._show_info_overlay = False
             self.dirty = 1
 
-    def is_in_grid(self, object) -> bool:
-        pass
+    def is_in_grid(self, rect) -> bool:
+        if rect.topleft[0] < 0:
+            return False
+        if rect.topleft[1] < 0:
+            return False
+        if rect.topleft[0] + rect.width > self.width:
+            return False
+        if rect.topleft[1] + rect.height > self.height:
+            return False
+        else:
+            return True
 
     def get_touching_borders(self, actor) -> list:
         return []
@@ -278,31 +298,24 @@ class GameGrid(container.Container):
         else:
             return False
 
-    def is_colliding(self, actor) -> bool:
-        colliding_actors = self.get_colliding_actors(actor)
-        if colliding_actors:
-            return True
-        else:
-            return False
-
     def get_colliding_actors(self, actor) -> list:
         pass
 
     def repaint(self):
         self._window.repaint_areas.extend(self.actors.draw(self._surface))
         if self.dirty == 1:
-            print("i am dirty")
             self._window.repaint_areas.append(self.rect())
             self.dirty = 0
-
 
     def show(self):
         """
         Startet das Programm.
         """
         self.actors.clear(self._surface, self.image)
+        print(self.columns, self.rows)
+        self._surface = pygame.Surface((self.width, self.height))
         self.dirty = 1
-        self._window.show()
+        self.window.show()
 
     def update(self):
         if self.__running:
@@ -326,5 +339,8 @@ class GameGrid(container.Container):
         for actor in self.actors:
             actor.get_event(event, data)
 
-    def get_event(self, event, data = None):
+    def act(self):
+        """
+        Überschreibe diese Methode in deinen Kind-Klassen
+        """
         pass

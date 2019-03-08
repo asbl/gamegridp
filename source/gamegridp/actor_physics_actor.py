@@ -10,8 +10,6 @@ class PhysicsActor(actor.Actor):
         super().__init__(*args, **kwargs)
         self._exact_coordinates = np.array([self.cell[0]+0.0, self.cell[1]+0.0])
 
-
-
     def bounce_from_border(self):
         borders = self.touching_borders
         if "top" in borders:
