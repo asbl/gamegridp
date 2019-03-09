@@ -65,8 +65,3 @@ class PixelGrid(gamegrid.GameGrid):
         if rect.topleft[1] <= 0:
             borders.append("top")
         return borders
-
-    def is_valid_move(self, destination_cell, actor = None):
-        if not self.is_in_grid(destination_cell):
-            return False
-        return True

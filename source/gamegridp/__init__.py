@@ -2,8 +2,9 @@ from gamegridp import keys
 from gamegridp.actor import Actor
 from gamegridp.image_renderer import ImageRenderer
 from gamegridp.actor_physics_actor import PhysicsActor
-from gamegridp.gamegrid import GameGrid
 from gamegridp.container import Container
+from gamegridp.window import GameGridWindow
+from gamegridp.gamegrid import GameGrid
 from gamegridp.container_toolbar import Toolbar
 from gamegridp.container_toolbar_widgets import *
 from gamegridp.container_console import Console
@@ -17,7 +18,6 @@ from gamegridp.gamegrid_audiogrid import AudioGrid
 from gamegridp.gamegrid_guigrid import GUIGrid
 from gamegridp.gamegrid_observer import EventManager
 from gamegridp.gamegrid_observer import Observer
-from gamegridp.window import GameGridWindow
 
 __all__ = ['GameGrid',
            'Actor',

@@ -1,34 +1,27 @@
-import os
-from gamegridp import container
 import pygame
 
+
 class ToolbarWidget():
-    def __init__(self, width=0, height=0,):
+
+    def __init__(self):
         self.myfont = pygame.font.SysFont("monospace", 15)
-        self.background_color = (255, 255, 255)
+        self.background_color = (0,255,0)
         self.event = "no event"
-        self._dirty = 1
-        self.width = width
-        self.height = height
+        self.width = 0 # Set in Toolbar repaint
+        self.height = 0 # Set in Toolbar repaint()
         self.parent = None
         self.clear()
-        self.dirty = 1
         self.parent = None
         self._text = ""
         self._image = None
         self._border = False
         self._text_padding = 5
         self._img_path = None
-        self.setup()
+        self.surface = None
+        self._dirty = 1
 
-    def setup(self):
-        pass
-
-    def get_surface(self):
-        return self.surface
-
-    def call_click_event(self, button, pos_x, pos_y):
-        return self.event, 0
+    def get_event(self, event, data):
+        self.parent.window.send_event_to_containers(self.event, 0)
 
     @property
     def dirty(self):
@@ -42,7 +35,6 @@ class ToolbarWidget():
 
     def clear(self):
         self.surface = pygame.Surface((self.width, self.height))
-        self.surface.fill(self.background_color)
         self.dirty = 1
         return self.surface
 
@@ -51,6 +43,7 @@ class ToolbarWidget():
         self.draw_surface()
 
     def draw_surface(self):
+        self.surface.fill(self.background_color)
         label = self.myfont.render(self._text, 1, (0, 0, 0))
         self.surface.blit(label, (self._text_padding, 5))
         if self._img_path is not None:
@@ -60,7 +53,9 @@ class ToolbarWidget():
         if self._border:
             border_rect = pygame.Rect(0, 0, self.width, self.height - 2)
             pygame.draw.rect(self.surface, self.background_color, border_rect, self.width)
+        print("fill widget surface...")
 
+        self.dirty = 1
 
     def set_text(self, text):
         self._text = text
@@ -77,20 +72,21 @@ class ToolbarWidget():
 
 class ToolbarButton(ToolbarWidget):
 
-    def __init__(self, text, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, text):
+        super().__init__()
         self.set_text(text)
         self.event = "button"
         self.data = text
 
-    def call_click_event(self, button, pos_x, pos_y):
-        return self.event, self.data
+    def get_event(self, event, data):
+        self.parent.window.send_event_to_containers(self.event, self._text)
+
 
 
 class ToolbarLabel(ToolbarWidget):
 
     def __init__(self, width, height, text, img_path, color=(0,255,255), border=(255,255,255)):
-        super().__init__(width, height, color)
+        super().__init__()
         self.set_image(img_path)
         self.set_text(text)
         self.event = "label"

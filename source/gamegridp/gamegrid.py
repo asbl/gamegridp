@@ -5,12 +5,12 @@ Created on Mon Apr 16 21:49:29 2018
 @author: Andreas Siebel
 """
 import pygame
-import window as gamegrid_window
-import container as container
-import image_renderer
+from gamegridp import *
+import inspect
+import logging
 
 
-class GameGrid(container.Container):
+class GameGrid(Container):
 
     def __init__(self, cell_size=1, columns=40, rows=40, margin=0):
         super().__init__(self)
@@ -22,7 +22,7 @@ class GameGrid(container.Container):
         self.image_action = None
         self.is_static = False
         # private
-        self._renderer = image_renderer.ImageRenderer()
+        self._renderer = ImageRenderer()
         self._show_info_overlay = False
         self._actors = pygame.sprite.LayeredDirty()
         self._key_pressed = False
@@ -44,8 +44,9 @@ class GameGrid(container.Container):
         # Init graphics
         self._surface = pygame.Surface((self.width, self.height))
         self.dirty = 1
-        self._window = gamegrid_window.GameGridWindow("Gamegrid")
+        self._window = GameGridWindow("Gamegrid")
         self._window.add_container(self, "main")
+
 
     def set_size(self,cell_size=1, columns=40, rows=40, margin=0):
         self.cell_size = cell_size
@@ -64,7 +65,7 @@ class GameGrid(container.Container):
     def filter_actor_list(list, class_name):
         return [actor for actor in list if actor.__class__.__name__ == class_name]
 
-    def get_event(self, event, data = None):
+    def get_event(self, event, data):
         pass
 
     def is_colliding(self, actor) -> bool:
@@ -89,8 +90,6 @@ class GameGrid(container.Container):
         else:
             self._height = self.rows * self._cell_size + (self.columns + 1) * self._cell_margin
             return self._height
-
-
 
     @property
     def window(self):
@@ -160,22 +159,18 @@ class GameGrid(container.Container):
             image = self._renderer.scale_image(image, (self.width, self.height))
             return image
 
-    def add_actor(self, actor, position):
+    def add_actor(self, actor: Actor, position=None) -> Actor:
         """
-        Fügt einen Actor zum Grid hinzu
-
-        Parameters
-        ----------
-        actor : gamegridp.Actor
-            Der Actor, der hinzugefügt werden soll
-        cell :
-            Der Ort, an dem der Actor hinzugefügt werden soll.
-
+        adds actor to grid
+        :param actor: the actor as subclass of Actor
+        :param position: the posision in the grid
+        :return: The Actor
         """
         self.actors.add(actor)
         actor.position = position
         actor.grid = self
         actor.dirty = 1
+        return actor
 
     def get_actors_by_pixel(self, coordinates):
         actors = []
@@ -206,7 +201,6 @@ class GameGrid(container.Container):
             self.remove_actor(actor)
 
     def reset(self):
-        self.setup()
         self.dirty = 1
 
     def stop(self):
@@ -222,47 +216,6 @@ class GameGrid(container.Container):
         """
         self.__running = True
 
-    def _pixel_to_cell(self, pos: tuple):
-        """
-        transforms a pixel-coordinate into a cell coordinate in grid
-        :param pos: the position in pixels
-        """
-        column = \
-            (pos[0] - self._cell_margin) // (self._cell_size + self._cell_margin)
-        row = \
-            (pos[1] - self._cell_margin) // (self._cell_size + self._cell_margin)
-        return column, row
-
-    def cell_to_rect(self, cell: tuple):
-        """
-        Gibt das Rechteck zurück, dass eine Zelle umschließt.
-        """
-        x = cell[0] * self._cell_size + cell[0] * self._cell_margin + self._cell_margin
-        y = cell[1] * self._cell_size + cell[1] * self._cell_margin + self._cell_margin
-        return pygame.Rect(x, y, self._cell_size, self._cell_size)
-
-    def cell_to_pixel(self, cell: tuple):
-        """
-        Gibt die obere-linke Koordinate einer Zelle zurück.
-        """
-        x = cell[0] * self._cell_size + cell[0] * self._cell_margin + self._cell_margin
-        y = cell[1] * self._cell_size + cell[1] * self._cell_margin + self._cell_margin
-        return pygame.Rect(x, y, self._cell_size, self._cell_size)
-
-    def map_rect_to_cell(self, cell, rect):
-        column, row = cell[0], cell[1]
-        overlapping_x, overlapping_y = 0, 0
-        cell_margin, cell_size = self.cell_margin, self.cell_size
-        width = rect.width
-        height = rect.height
-        if width > cell_size:
-            overlapping_x = (width - cell_size) / 2
-        if height > cell_size:
-            overlapping_y = (height - cell_size) / 2
-        left = cell_margin + (cell_margin + cell_size) * column - overlapping_x
-        top = cell_margin + (cell_margin + cell_size) * row - overlapping_y
-        return pygame.Rect(left, top, width, height)
-
     @property
     def show_info_overlay(self):
         return self._show_info_overlay
@@ -276,14 +229,9 @@ class GameGrid(container.Container):
             self._show_info_overlay = False
             self.dirty = 1
 
-    def is_in_grid(self, rect) -> bool:
-        if rect.topleft[0] < 0:
-            return False
-        if rect.topleft[1] < 0:
-            return False
-        if rect.topleft[0] + rect.width > self.width:
-            return False
-        if rect.topleft[1] + rect.height > self.height:
+    def is_in_grid(self, rect: pygame.Rect) -> bool:
+        x, y, width, height = rect.topleft[0], rect.topleft[1], rect.width, rect.height
+        if x < 0 or y < 0 or x + width > self.width or y + height > self.height:
             return False
         else:
             return True
@@ -304,7 +252,7 @@ class GameGrid(container.Container):
     def repaint(self):
         self._window.repaint_areas.extend(self.actors.draw(self._surface))
         if self.dirty == 1:
-            self._window.repaint_areas.append(self.rect())
+            self._window.repaint_areas.append(self.rect)
             self.dirty = 0
 
     def show(self):
@@ -315,11 +263,12 @@ class GameGrid(container.Container):
         print(self.columns, self.rows)
         self._surface = pygame.Surface((self.width, self.height))
         self.dirty = 1
+        logging.basicConfig(level=logging.WARNING)
         self.window.show()
 
     def update(self):
         if self.__running:
-            self.__act_all()
+            self._act_all()
         self.__frame = self.__frame + 1
         for actor in self.actors:
             actor.update()
@@ -327,7 +276,7 @@ class GameGrid(container.Container):
             self.__frame = 0
         self.__clock.tick(60)
 
-    def __act_all(self):
+    def _act_all(self):
         self.__tick = self.__tick + 1
         if self.__tick > 60 - self.speed:
             for actor in self.actors:
@@ -344,3 +293,38 @@ class GameGrid(container.Container):
         Überschreibe diese Methode in deinen Kind-Klassen
         """
         pass
+
+    def map_rect_to_position(self, position : tuple, rect : pygame.Rect) -> pygame.Rect:
+        """
+        Centers a rectangle over a cell
+        :param position: (x, y): Position of rectangle
+        :param rect: the rectangle
+        :return: centered rectangle
+        """
+        top_left = self.cell_top_left((position[0], position[1]))
+        new_rect = pygame.Rect(top_left[0],top_left[1],rect.width,rect.height)
+        return new_rect
+
+    def pixel_to_cell(self, position: tuple) -> tuple:
+        """
+        Returns the cell in which the pixel coordinates are located.
+        :param position: (x, y), pixel coordinates
+        :return: (x,y) a gamegrid cell
+        """
+        column = (position[0] - self._cell_margin) // (self._cell_size + self._cell_margin)
+        row = (position[1] - self._cell_margin) // (self._cell_size + self._cell_margin)
+        return column, row
+
+    def cell_to_rect(self, cell: tuple) -> pygame.Rect:
+        """
+        Returns the enclosing rectangle.
+        :param cell: (x, y), cell coordinates
+        :return: the enclosing rectangle
+        """
+        x = cell[0] * self._cell_size + cell[0] * self._cell_margin + self._cell_margin
+        y = cell[1] * self._cell_size + cell[1] * self._cell_margin + self._cell_margin
+        return pygame.Rect(x, y, self._cell_size, self._cell_size)
+
+    def cell_top_left(self,cell: tuple)->tuple:
+        rect = self.cell_to_rect(cell)
+        return rect.topleft

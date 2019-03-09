@@ -1,35 +1,41 @@
-import gamegridp
+from gamegridp import *
+import pygame
 
-
-class Toolbar(gamegridp.Container):
+class Toolbar(Container):
 
     def __init__(self, size=100):
         super().__init__(size)
-        self.width = size
         self.widgets = []
-        self.dirty = 1
         self.position = "right"
+        self.dirty = 1
 
     def get_widget(self, index):
         return self.widgets[index]
 
     def add_widget(self, widget):
-        widget.width = self.width
-        widget.height = 25
+        """
+        adds a widget to the toolbar
+        :param widget: A toolbar widget
+        :return:
+        """
         widget.clear()
+        widget.parent = self
         self.widgets.append(widget)
 
-    def _draw_surface(self, surface):
-        """
-        Creates a toolbar on the left side of the window
-        """
-        _actual_height = 0
-        for widget in self.widgets:
-            if widget.dirty == 1:
-                widget.repaint()
-                surface.blit(widget.surface, (0, _actual_height))
-                widget.dirty = 0
-            _actual_height = _actual_height + widget.height
+    def repaint(self):
+        if self.dirty:
+            self.surface.fill((255,255,255))
+            if self.widgets:
+                for widget in self.widgets:
+                    if widget.dirty == 1:
+                        widget.width = self._container_width
+                        widget.height = 30
+                        widget.repaint()
+                        self.surface.blit(widget.surface, (0, 0))
+                        print("blitted")
+                        widget.dirty = 0
+                self.dirty = 0
+                self._window.repaint_areas.append(self.rect)
 
     def _widgets_total_height(self):
         height = 0
@@ -37,13 +43,14 @@ class Toolbar(gamegridp.Container):
             height += widget.height
         return height
 
-    def call_click_event(self, button, pos_x, pos_y):
-        if button == "mouse_left":
+    def get_event(self, event, data):
+        if event == "mouse_left":
             height = 0
-            if not pos_y > self._widgets_total_height():
+            x, y = data[0], data[1]
+            if not y> self._widgets_total_height():
                 for widget in self.widgets:
-                    if height + widget.height > pos_y:
-                        return widget.call_click_event(button, pos_x, pos_y)
+                    if height + widget.height > y:
+                        return widget.get_event(event, data)
                     else:
                         height = height + widget.height
         else:

@@ -4,24 +4,30 @@ Created on Mon Apr 16 21:50:48 2018
 
 @author: asieb
 """
-
+from typing import Union
 import math
 import pygame
 import gamegridp
 from gamegridp import image_renderer
 from typing import Type
+import sys
+from logging import *
+import traceback
+
 
 
 class Actor(pygame.sprite.DirtySprite):
 
     actor_count = 0
+    log = getLogger("actor")
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self):
+        super().__init__()
         # private
         self._renderer = image_renderer.ImageRenderer()
         self._image = self._renderer.get_image()
         self._size = (40, 40)  # Tuple with size
+        self._position = (0, 0) # set by gamegrid.add_actor
         # protected
         self.__flip_x = False
         self.__is_in_grid = False
@@ -47,7 +53,10 @@ class Actor(pygame.sprite.DirtySprite):
         self.__collision_partners.add(partner)
 
     def __str__(self):
-        return "Klasse: {0}; ID: {1}".format(self.class_name , self.__actor_id)
+        if self.grid:
+            return "Klasse: {0}; ID: {1}, Position: {2}".format(self.class_name , self.__actor_id, self.rect)
+        else:
+            return "Klasse: {0}; ID: {1}".format(self.class_name , self.__actor_id)
 
     @property
     def image(self):
@@ -69,7 +78,14 @@ class Actor(pygame.sprite.DirtySprite):
 
     @property
     def rect(self):
-        return self.grid.map_rect_to_cell(self.position, self.image.get_rect())
+        try:
+            return self.grid.map_rect_to_position(self.position, self.image.get_rect())
+        except AttributeError as e:
+            if self.grid is None:
+                traceback.print_stack()
+                Actor.log.error("ERROR: The actor {0} is not in a grid\n"
+                      "Maybe you forgot to add the actor with the grid.add_actor function ".format(self))
+                sys.exit(1)
 
     def add_image(self, img_path: str,):
         return self._renderer.add_image(img_path)
@@ -100,7 +116,8 @@ class Actor(pygame.sprite.DirtySprite):
         """
         return self._size
 
-    def set_size(self, value):
+    @size.setter
+    def size(self, value):
         self._size = value
         self.changed()
 
@@ -229,27 +246,28 @@ class Actor(pygame.sprite.DirtySprite):
         self.direction = direction
         return self.direction
 
-    def move_back(self, distance: int = 1):
-        destination = self.look("forward", distance)
-        self.position = destination
-
-    def move(self, direction : str = "forward", distance : int = 1):
+    def move(self, direction: Union[str,int] = "forward", distance : int = 1) -> pygame.Rect:
         self.direction = self._value_to_direction(direction)
         destination = self.look(direction, distance)
-        self.position = destination
+        self.position = self.grid.pixel_to_cell(destination.topleft)
+        if self.grid is not None:
+            return self.rect
+        else:
+            return None
 
-    def look(self, direction: str = "forward", distance: int = 1) -> tuple:
+    def look(self, direction: str = "forward", distance: int = 1) -> pygame.Rect:
         direction = self._value_to_direction(direction)
-        x = round(self.position[0] + math.cos(math.radians(direction)) * distance)
-        y = round(self.position[1] - math.sin(math.radians(direction)) * distance)
-        return x, y
+        x = (self.position[0] + round(math.cos(math.radians(direction))) * distance)
+        y = (self.position[1] - round(math.sin(math.radians(direction))) * distance)
+        print("look",self.position,(x,y),self.grid.map_rect_to_position((x,y), self.rect))
+        return self.grid.map_rect_to_position((x, y), self.rect)
 
     def update(self):
         self._next_sprite()
 
     def changed(self):
         self.dirty = 1
-        self.__update_status()
+        self._update_status()
 
     def _value_to_direction(self, value) -> int:
         if value == "right":
@@ -269,12 +287,12 @@ class Actor(pygame.sprite.DirtySprite):
 
     def remove(self):
         """
-        Entfernt den Akteur vom Grid.
+        Removes this actor from grid
         """
         self.grid.remove_actor(self)
         del (self)
 
-    def __update_status(self):
+    def _update_status(self):
         try:
             in_grid = self.is_in_grid()
             if in_grid != self.__is_in_grid:
@@ -293,6 +311,7 @@ class Actor(pygame.sprite.DirtySprite):
                     if col_partner not in self.__colliding_actors:
                         col_partner.__colliding_actors.append(self)
                         self.get_event("collision", (self, col_partner))
+                        self.grid.get_event("collision", (self, col_partner))
         except AttributeError:
             pass
 
@@ -303,7 +322,7 @@ class Actor(pygame.sprite.DirtySprite):
         return self.grid.get_colliding_actors(self)
 
     def is_colliding_with(self, class_name):
-        colliding_actors = self._grid.get_colliding_actors(self)
+        colliding_actors = self.grid.get_colliding_actors(self)
         return gamegridp.GameGrid.filter_actor_list(colliding_actors, class_name)
 
     def is_at_border(self):

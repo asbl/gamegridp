@@ -1,38 +1,42 @@
-import gamegridp
+from gamegridp import *
 
 
-class MyGrid(gamegridp.CellGrid, gamegridp.GUIGrid,  gamegridp.AudioGrid):
-    """My Grid with custom setup method."""
-    def setup(self):
+class MyGrid(CellGrid, GUIGrid,  AudioGrid):
+
+    def __init__(self):
+        super().__init__(cell_size=20, columns=30, rows=20, margin=1)
         for i in range(self.rows):
             for j in range(self.columns):
-                Grass(self, (j,i))
-        Wall(self,(0,4))
-        Wall(self, (1, 4))
-        Wall(self, (2, 4))
-        Wall(self, (3, 4))
-        Wall(self, (4, 4))
-        Wall(self, (5, 4))
-        Wall(self, (6, 4))
-        Wall(self, (6, 0))
-        Wall(self, (6, 1))
-        #Wall(self, (6, 2))
-        Wall(self, (6, 3))
-        Torch(self, (10, 8))
-        Fireplace(self, (10, 14))
-        Door(self, (6, 2))
-        Player(self, (8, 2))
+                self.add_actor(Grass(), (j, i))
+        wall = self.add_actor(Wall(),(0,4))
+        print("wp:", wall.position)
+        self.add_actor(Wall(), (1, 4))
+        self.add_actor(Wall(), (2, 4))
+        self.add_actor(Wall(), (3, 4))
+        self.add_actor(Wall(), (4, 4))
+        self.add_actor(Wall(), (5, 4))
+        self.add_actor(Wall(), (6, 4))
+        self.add_actor(Wall(), (6, 0))
+        self.add_actor(Wall(), (6, 1))
+        self.add_actor(Wall(), (6, 3))
+        self.add_actor(Torch(), (10, 4))
+        print(Fireplace())
+        self.add_actor(Fireplace(), (10, 14))
+        self.add_actor(Door(), (6,2))
+        self.add_actor(Player(), (8, 2))
         self.play_music("rpgsounds/bensound-betterdays.mp3")
-        toolbar = gamegridp.Toolbar()
-        self._window.add_container(toolbar, "right")
-        console = gamegridp.Toolbar()
-        self._window.add_container(console, "bottom")
-        self.run()
+        #toolbar = Toolbar()
+        #self._window.add_container(toolbar, "right")
+        #console = Toolbar()
+        #self._window.add_container(console, "bottom")
 
-class Player(gamegridp.Actor):
-    def setup(self):
+
+class Player(Actor):
+
+    def __init__(self):
+        super().__init__()
         self.add_image("rpgimages/knight.png")
-        self.inventory=[]
+        self.inventory = []
 
     def act(self):
         pass
@@ -40,20 +44,20 @@ class Player(gamegridp.Actor):
     def get_event(self, event, data):
         if event == "key_down":
             if "W" in data:
-                self.move_up()
+                self.move("up")
             elif "S" in data:
-                self.move_down()
+                self.move("down")
             elif "A" in data:
-                self.move_left()
+                self.move("left")
             elif "D" in data:
-                self.move_right()
-        # Wird auf den Button Torch gedrückt?
-        elif event == "button" and data=="Fackel":
+                self.move("right")
+        # is button torch pressed?
+        elif event == "button" and data == "Fackel":
             fireplace = self.get_colliding_actors("Fireplace")
             if fireplace:
                 self.grid.console.print("Du zündest die Feuerstelle an.")
                 fireplace.burn()
-        # wird eine Fackel gefunden?
+        # was a torch found?
         torch = self.is_colliding_with("torch")
         if torch:
             message = "Du findest eine Fackel. Möchtest du sie aufheben?"
@@ -66,7 +70,7 @@ class Player(gamegridp.Actor):
                 self.grid.toolbar.add_button("Fackel", "rpgimages/torch.png")
         # Prallt der Held auf eine Tür?
         door = self.get_actor_in_front("Door")
-        self.look_forward(is_there_a="Door")
+        self.look("forward")
         if door:
             if door.closed:
                 message = "Die Tür ist geschlossen... möchtest du sie öffnen"
@@ -76,21 +80,33 @@ class Player(gamegridp.Actor):
                     door.open()
                     self.grid.console.print("Du hast das Tor geöffnet.")
 
-class Wall(gamegridp.Actor):
-    def setup(self):
+
+class Wall(Actor):
+
+    def __init__(self):
+        super().__init__()
         self.is_blocking = True
         self.add_image("rpgimages/wall.png")
 
-class Grass(gamegridp.Actor):
-    def setup(self):
+
+class Grass(Actor):
+
+    def __init__(self):
+        super().__init__()
         self.add_image("rpgimages/grass.png")
 
-class Torch(gamegridp.Actor):
-    def setup(self):
+
+class Torch(Actor):
+
+    def __init__(self):
+        super().__init__()
         self.add_image("rpgimages/torch.png")
 
-class Fireplace(gamegridp.Actor):
-    def setup(self):
+
+class Fireplace(Actor):
+
+    def __init__(self):
+        super().__init__()
         self.add_image("rpgimages/fireplace_0.png")
         self.burning = False
         self.is_static = True
@@ -104,8 +120,11 @@ class Fireplace(gamegridp.Actor):
             self.animate()
             self.burning = True
 
-class Door(gamegridp.Actor):
-    def setup(self):
+
+class Door(Actor):
+
+    def __init__(self):
+        super().__init__()
         self.add_image("rpgimages/door_closed.png")
         self.is_blocking = True
         self.closed = True
@@ -119,5 +138,5 @@ class Door(gamegridp.Actor):
             self.is_blocking = False
 
 
-my_grid = MyGrid("My Grid", cell_size=20, columns=30, rows=20, margin=1)
+my_grid = MyGrid()
 my_grid.show()

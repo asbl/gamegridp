@@ -1,13 +1,14 @@
 import pygame
 import math
 
-class ImageRenderer ():
+
+class ImageRenderer():
+    """
+    Utility class for managing sprite images
+    """
 
     images_dict = {}
 
-    """
-
-    """
     def __init__(self):
         # not mutable
         self._images_list = []  # Original images
@@ -15,12 +16,9 @@ class ImageRenderer ():
 
     def add_image(self, img_path: str):
         """
-        Ergänzt ein einzelnes Bild zu einem Actor. Auf diese Weise können mehrere Bilder hinzugefügt werden.
-        Die Animation kann dann mit *animate()* gestartet werdeb
-
-        :param img_path: Der Pfad des Bildes relativ zum eigenen Dateipfad.
-        :param img_action: Die Aktion die durchgeführt werden soll: *scale*, *crop*, *do_nothing*
-        :param size: scale/crop : Die Größe des veränderten Bildes as 2-Tupel
+        adds an image
+        :param img_path:  the image path
+        :return: the image added
         """
         if img_path in ImageRenderer.images_dict:
             # load image from img_dict
@@ -34,7 +32,8 @@ class ImageRenderer ():
 
     def get_image(self):
         """
-        Zeichnet den Akteur auf das Spielfeld.
+        gets actual image
+        :return: the actual image
         """
         if self._images_list:
             return self._images_list[self._image_index]

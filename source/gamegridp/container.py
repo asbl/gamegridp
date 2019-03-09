@@ -1,4 +1,3 @@
-import os
 import pygame
 
 
@@ -17,8 +16,9 @@ class Container:
         self._docking_position = None  # Set in add_to_window
         self._surface = None
 
-    def setup(self):
-        pass
+    @property
+    def window(self):
+        return self._window
 
     def add_to_window(self, window, dock):
         self._window = window
@@ -46,12 +46,10 @@ class Container:
         self._surface = pygame.Surface((self.width, self.height))
 
     def repaint(self):
-        self.blit_surface_to_window_suface()
-        if self.dirty == 1:
-            self.dirty = 0
+        pass
 
-    def blit_surface_to_window_suface(self):
-        self._window.window_surface.blit(self._surface, self.rect())
+    def blit_surface_to_window_surface(self):
+        self._window.window_surface.blit(self._surface, self.rect)
 
     def remove(self):
         pass
@@ -62,6 +60,11 @@ class Container:
     def get_event(self, event, data):
         pass
 
+    @property
+    def surface(self):
+        return self._surface
+
+    @property
     def rect(self):
         return pygame.Rect(self._container_top_left_x, self._container_top_left_y, self.width, self.height)
 

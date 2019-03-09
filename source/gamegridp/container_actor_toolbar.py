@@ -5,8 +5,8 @@ import pygame
 
 class ActorToolbar(gamegridp.Toolbar):
 
-    def __init__(self, size=100, position="right"):
-        super().__init__(size, position)
+    def __init__(self, size=100):
+        super().__init__(size)
         self.position = "right"
         self.actor = None
         self._init_labels()

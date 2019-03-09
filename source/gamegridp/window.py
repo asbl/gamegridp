@@ -27,13 +27,12 @@ class GameGridWindow:
         for container in self._containers:
             container.update()
             container.repaint()
-            container.blit_surface_to_window_suface()
+            container.blit_surface_to_window_surface()
         pygame.display.update(self.repaint_areas)
         self.repaint_areas = []
 
     def add_container(self, container, dock):
         self._containers.append(container)
-        container.setup()
         container.add_to_window(self, dock)
 
     def remove_container(self, container):
@@ -74,7 +73,7 @@ class GameGridWindow:
     def get_container_by_pixel(self, pixel_x: int, pixel_y: int):
         for container in self._containers:
             print(pixel_x, pixel_y)
-            if container.rect().collidepoint((pixel_x, pixel_y)):
+            if container.rect.collidepoint((pixel_x, pixel_y)):
                 return container
         return None
 

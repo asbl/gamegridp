@@ -1,10 +1,10 @@
-from gamegridp import gamegrid
+from gamegridp import *
 import math
 import pygame
 from collections import defaultdict
 
 
-class CellGrid(gamegrid.GameGrid):
+class CellGrid(GameGrid):
     """
     Das Cell-Grid ist gedacht für Grids, deren Zellen größer als 1 Pixel sind.
     """
@@ -14,87 +14,69 @@ class CellGrid(gamegrid.GameGrid):
         self._static_actors_dict = defaultdict(list)
         self._dynamic_actors = []
 
-    def update_actor_positions(self):
-        # update the dynamic_collison dict before calling the collisions
+    def _update_actors_positions(self) -> None:
         self._dynamic_actors_dict.clear()
         for actor in self._dynamic_actors:
             x, y = actor.position[0], actor.position[1]
             self._dynamic_actors_dict[(x, y)].append(actor)
 
-    def get_colliding_actors(self, actor) -> list:
-        self.update_actor_positions()
+    def get_colliding_actors(self, actor: Actor) -> list:
+        self._update_actors_positions()
         x, y = actor.position[0], actor.position[1]
-        colliding_actors = self.get_all_actors_at_position((x, y))
+        colliding_actors = self.actors_at_position((x, y))
         if actor in colliding_actors:
             colliding_actors.remove(actor)
         return colliding_actors
 
-    def get_all_actors_at_position(self, position):
-        self.update_actor_positions()
+    def actors_at_position(self, position: tuple) -> list:
+        self._update_actors_positions()
         x, y = position[0], position[1]
         actors = []
-        if self.is_in_grid((x, y)):
+        if self.is_in_grid(self.map_rect_to_position((x,y), self.rect)):
             if self._dynamic_actors_dict[x, y]:
                 actors.extend(self._dynamic_actors_dict[(x, y)])
             if self._static_actors_dict[x, y]:
                 actors.extend(self._static_actors_dict[(x, y)])
         return actors
 
-    def remove_actor(self, actor):
+    def remove_actor(self, actor: Actor)-> None:
         if actor in self._dynamic_actors:
             self._dynamic_actors.remove(actor)
         if actor in  self._static_actors_dict[(actor.x, actor.y)]:
             self._static_actors_dict[(actor.x, actor.y)].remove(actor)
         super().remove_actor(actor)
 
-    def remove_actors_from_cell(self, location):
+    def remove_actors_from_cell(self, cell: tuple)->None:
         """
         Entfernt alle Actors aus einer Zelle
         Parameters
         ----------
-        location : Die Zelle aus der der Akteur entfernt werden soll.
+        cell : Die Zelle aus der der Akteur entfernt werden soll.
 
         Returns
         -------
 
         """
-        for actor in self._dynamic_actors_dict[location[0], location[1]]:
+        for actor in self._dynamic_actors_dict[cell[0], cell[1]]:
             self.remove_actor(actor)
-        for actor in self._static_actors_dict[location[0], location[1]]:
+        for actor in self._static_actors_dict[cell[0], cell[1]]:
             self.remove_actor(actor)
 
-    def add_actor(self, actor, position=None):
+    def add_actor(self, actor: Actor, position : tuple = None) -> Actor:
         if actor.is_static:
-            self._static_actors_dict[(actor.get_x(), actor.get_y())].append(actor)
+            self._static_actors_dict[(actor.x, actor.y)].append(actor)
         else:
             self._dynamic_actors.append(actor)
         super().add_actor(actor, position)
+        return actor
 
-    def update_actor(self, actor, attribute, value):
+    def update_actor(self, actor : Actor, attribute, value):
         if attribute == "is_static" and value is True:
-            self._static_actors_dict[(actor.get_x(), actor.get_y())].append(actor)
+            self._static_actors_dict[(actor.x(), actor.y())].append(actor)
             if actor in self._dynamic_actors_dict:
-                self._dynamic_actors_dict.remove(actor)
+                self._dynamic_actors_dict.pop(actor)
         else:
             self._dynamic_actors.append(actor)
-        super()._update_actor(actor, attribute, value)
-
-
-    def add_cell_image(self, img_path: str, location: tuple):
-        """
-        Fügt ein Bild zu einer einzelnen Zelle hinzu
-
-        :param img_path: Der Pfad zum Bild relativ zum aktuellen Verzeichnis
-        :param location: Die Zelle, die "angemalt" werden soll.
-        """
-        top_left = self.cell_to_pixel(location)
-        cell_image = pygame.image.load(img_path).convert()
-        cell_image = pygame.transform.scale(cell_image, (self.cell_size, self.cell_size))
-        self._image.blit(cell_image, (top_left[0], top_left[1], self.cell_size, self.cell_size))
-
-    @property
-    def type(self):
-        return "cell"
 
     def is_empty_cell(self, cell: tuple) -> bool:
         """
@@ -108,7 +90,7 @@ class CellGrid(gamegrid.GameGrid):
         else:
             return False
 
-    def get_neighbour_cells(self, cell) -> list:
+    def get_neighbour_cells(self, cell: tuple) -> list:
         """
         Gibt alle 8 umgebenen Zellen zurück.
 
@@ -127,8 +109,8 @@ class CellGrid(gamegrid.GameGrid):
         cells.append([x_pos + 1, y_pos - 1])
         return cells
 
-    def is_in_grid(self, position):
-        x, y = position[0], position[1]
+    def is_in_grid(self, rect: pygame.Rect) -> bool:
+        x, y = self.pixel_to_cell(rect.center)
         if x > self.columns - 1:
             return False
         elif y > self.rows - 1:
@@ -138,7 +120,7 @@ class CellGrid(gamegrid.GameGrid):
         else:
             return True
 
-    def is_at_border(self, actor):
+    def is_at_border(self, actor : Actor) -> str:
         if actor.x == self.columns - 1:
             return "right"
         elif actor.y == self.rows - 1:
@@ -148,4 +130,4 @@ class CellGrid(gamegrid.GameGrid):
         elif actor.y == 0:
             return "top"
         else:
-            return False
+            return None
