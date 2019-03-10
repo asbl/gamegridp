@@ -1,7 +1,10 @@
 import pygame
+import logging
 
 
 class Container:
+
+    clog = logging.getLogger("Container")
 
     def __init__(self, size = 0):
         self.dirty = 1
@@ -14,7 +17,7 @@ class Container:
         self._container_top_left_x = 0  # Set in add_to_window
         self._container_top_left_y = 0  # Set in add_to_window
         self._docking_position = None  # Set in add_to_window
-        self._surface = None
+        self._image = None
 
     @property
     def window(self):
@@ -42,14 +45,14 @@ class Container:
             self._docking_position = dock
             self._container_width = self._window.window_width
             self._container_height = self.size
-        print("w,h in container:", self.width, self.height)
-        self._surface = pygame.Surface((self.width, self.height))
+        self.clog.info("Added Container {0} with width: {1} and height {2}".format(self, self.width, self.height))
+        self._image = pygame.Surface((self.width, self.height))
 
     def repaint(self):
         pass
 
     def blit_surface_to_window_surface(self):
-        self._window.window_surface.blit(self._surface, self.rect)
+        self._window.window_surface.blit(self._image, self.rect)
 
     def remove(self):
         pass
@@ -62,7 +65,7 @@ class Container:
 
     @property
     def surface(self):
-        return self._surface
+        return self._image
 
     @property
     def rect(self):

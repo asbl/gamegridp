@@ -68,7 +68,11 @@ class CellGrid(GameGrid):
         else:
             self._dynamic_actors.append(actor)
         super().add_actor(actor, position)
+        if actor.size == (0, 0):
+            actor.size = (self.cell_size, self.cell_size)
         return actor
+
+
 
     def update_actor(self, actor : Actor, attribute, value):
         if attribute == "is_static" and value is True:

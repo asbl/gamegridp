@@ -16,8 +16,6 @@ from gamegridp.gamegrid_pixelgrid import PixelGrid
 from gamegridp.gamegrid_databasegrid import DatabaseGrid
 from gamegridp.gamegrid_audiogrid import AudioGrid
 from gamegridp.gamegrid_guigrid import GUIGrid
-from gamegridp.gamegrid_observer import EventManager
-from gamegridp.gamegrid_observer import Observer
 
 __all__ = ['GameGrid',
            'Actor',
@@ -38,7 +36,5 @@ __all__ = ['GameGrid',
            'ToolbarButton',
            'ToolbarLabel',
            'ImageRenderer',
-           'EventManager',
-           'Observer',
            'GameGridWindow',
             ]

@@ -15,18 +15,17 @@ from logging import *
 import traceback
 
 
-
 class Actor(pygame.sprite.DirtySprite):
 
     actor_count = 0
-    log = getLogger("actor")
+    log = getLogger("Actor")
 
     def __init__(self):
         super().__init__()
         # private
         self._renderer = image_renderer.ImageRenderer()
         self._image = self._renderer.get_image()
-        self._size = (40, 40)  # Tuple with size
+        self._size = (0, 0)  # Tuple with size
         self._position = (0, 0) # set by gamegrid.add_actor
         # protected
         self.__flip_x = False
@@ -40,14 +39,10 @@ class Actor(pygame.sprite.DirtySprite):
         Actor.actor_count += 1
         # public
         self.animation_speed = 60
-        self.image_actions = ["flip", "rotate", "scale"]
         self.is_static = False
         self.is_animated = False
         self.direction = 0
         self.grid = None
-
-    def add_image_action(self, value):
-        self.image_actions.append(value)
 
     def add_collision_partner(self, partner):
         self.__collision_partners.add(partner)
@@ -58,22 +53,18 @@ class Actor(pygame.sprite.DirtySprite):
         else:
             return "Klasse: {0}; ID: {1}".format(self.class_name , self.__actor_id)
 
+    def image_action(self, attribute : str, value : bool):
+            self._renderer.image_actions[attribute] = value
+
     @property
     def image(self):
         if not self.dirty:
             return self._image
         else:
+            self._renderer.direction = self.direction
+            self._renderer.size = self.size
+            self._renderer.flipped = self.__flip_x
             image = self._renderer.get_image()
-            if self.grid.show_info_overlay:
-                image = self._renderer.draw_direction_overlay(image, (255, 255, 0), self.direction)
-            if "scale" in self.image_actions:
-                image = image_renderer.ImageRenderer.scale_image(image, self.size)
-            if "center" in self.image_actions:
-                image = image_renderer.ImageRenderer.center_image(image, self.size, self.grid.cell_size)
-            if "flip" in self.image_actions:
-                image = image_renderer.ImageRenderer.flip_image(image, self.__flip_x, False)
-            if "rotate" in self.image_actions:
-                image = image_renderer.ImageRenderer.rotate_image(image, self.direction)
             return image
 
     @property
@@ -83,11 +74,11 @@ class Actor(pygame.sprite.DirtySprite):
         except AttributeError as e:
             if self.grid is None:
                 traceback.print_stack()
-                Actor.log.error("ERROR: The actor {0} is not in a grid\n"
-                      "Maybe you forgot to add the actor with the grid.add_actor function ".format(self))
+                self.log.error("ERROR: The actor {0} is not in a grid\n"
+                                "Maybe you forgot to add the actor with the grid.add_actor function ".format(self))
                 sys.exit(1)
 
-    def add_image(self, img_path: str,):
+    def add_image(self, img_path: str) -> pygame.Surface:
         return self._renderer.add_image(img_path)
 
     def _next_sprite(self):
@@ -246,20 +237,17 @@ class Actor(pygame.sprite.DirtySprite):
         self.direction = direction
         return self.direction
 
-    def move(self, direction: Union[str,int] = "forward", distance : int = 1) -> pygame.Rect:
+    def move(self, direction: Union[str,int] = "forward", distance : int = 1) -> tuple:
         self.direction = self._value_to_direction(direction)
         destination = self.look(direction, distance)
         self.position = self.grid.pixel_to_cell(destination.topleft)
-        if self.grid is not None:
-            return self.rect
-        else:
-            return None
+        self.log.info("Move to position {0}".format(self.position))
+        return self.position
 
     def look(self, direction: str = "forward", distance: int = 1) -> pygame.Rect:
         direction = self._value_to_direction(direction)
         x = (self.position[0] + round(math.cos(math.radians(direction))) * distance)
         y = (self.position[1] - round(math.sin(math.radians(direction))) * distance)
-        print("look",self.position,(x,y),self.grid.map_rect_to_position((x,y), self.rect))
         return self.grid.map_rect_to_position((x, y), self.rect)
 
     def update(self):

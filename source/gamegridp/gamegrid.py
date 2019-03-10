@@ -12,6 +12,8 @@ import logging
 
 class GameGrid(Container):
 
+    log = logging.getLogger("GameGrid")
+
     def __init__(self, cell_size=1, columns=40, rows=40, margin=0):
         super().__init__(self)
         pygame.init()
@@ -19,7 +21,6 @@ class GameGrid(Container):
         self.is_running = False
         self.speed = 60
         self.active_actor = None
-        self.image_action = None
         self.is_static = False
         # private
         self._renderer = ImageRenderer()
@@ -31,7 +32,6 @@ class GameGrid(Container):
         self._grid = []
         self.cell_size = cell_size
         self._columns, self._rows = columns, rows
-        print("c,r in init:", self.columns, self.rows)
         self._cell_margin = margin
         self.set_size(cell_size, columns, rows, margin)
         # protected
@@ -42,24 +42,26 @@ class GameGrid(Container):
         self.__last_update = pygame.time.get_ticks()
         self.__running = True
         # Init graphics
-        self._surface = pygame.Surface((self.width, self.height))
+        self._image = pygame.Surface((0,0))
         self.dirty = 1
         self._window = GameGridWindow("Gamegrid")
         self._window.add_container(self, "main")
 
-
-    def set_size(self,cell_size=1, columns=40, rows=40, margin=0):
+    def set_size(self, cell_size=1, columns=40, rows=40, margin=0):
         self.cell_size = cell_size
         self._columns = columns
         self._rows = rows
         self._cell_margin = margin
         self._grid = []
-        print("c,r:", self.columns, self.rows)
+        self.log.info("Set GameGrid Size to {0} columns and {1} rows".format(self.columns, self.rows))
         for row in range(self.rows):
             self._grid.append([])
             for column in range(self.columns):
                 self._grid[row].append(0)
         self.dirty = 1
+
+    def __str__(self):
+        return "[Grid with {0} columns and {1} rows]".format(self.columns, self.rows)
 
     @staticmethod
     def filter_actor_list(list, class_name):
@@ -86,10 +88,10 @@ class GameGrid(Container):
     @property
     def height(self):
         if self.dirty == 0:
-            return self._height
+            return self._container_height
         else:
-            self._height = self.rows * self._cell_size + (self.columns + 1) * self._cell_margin
-            return self._height
+            self._container_height = self.rows * self._cell_size + (self.columns + 1) * self._cell_margin
+            return self._container_height
 
     @property
     def window(self):
@@ -147,17 +149,21 @@ class GameGrid(Container):
     def class_name(self) -> str:
         return self.__class__.__name__
 
+    def image_action(self, attribute : str, value : bool):
+            self._renderer.image_actions[attribute] = value
+
     def add_image(self, img_path: str):
-        self._image = self._renderer.add_image(img_path)
+        return self._renderer.add_image(img_path)
 
     @property
     def image(self):
         if not self.dirty:
             return self._image
         else:
-            image = self._renderer.get_image()
-            image = self._renderer.scale_image(image, (self.width, self.height))
-            return image
+            self._renderer.size = (self._container_width, self._container_height)
+            _image = self._renderer.get_image()
+            self._image = _image
+            return _image
 
     def add_actor(self, actor: Actor, position=None) -> Actor:
         """
@@ -170,6 +176,7 @@ class GameGrid(Container):
         actor.position = position
         actor.grid = self
         actor.dirty = 1
+        self.log.info("Added actor {0} to {1} at position {2} with rect {3}".format(actor, self, actor.position, actor.rect))
         return actor
 
     def get_actors_by_pixel(self, coordinates):
@@ -210,10 +217,6 @@ class GameGrid(Container):
         self.__running = False
 
     def run(self):
-        """
-        Startet die Ausführung (equivalent zum Drücken des Run-Buttons).
-        Wenn das Spiel läuft handeln die Akteure mit jedem Durchlauf der mainloop genau einmal.
-        """
         self.__running = True
 
     @property
@@ -230,8 +233,8 @@ class GameGrid(Container):
             self.dirty = 1
 
     def is_in_grid(self, rect: pygame.Rect) -> bool:
-        x, y, width, height = rect.topleft[0], rect.topleft[1], rect.width, rect.height
-        if x < 0 or y < 0 or x + width > self.width or y + height > self.height:
+        topleftx, toplefty, right, top = rect.topleft[0], rect.topleft[1], rect.right, rect.top
+        if topleftx < 0 or toplefty < 0 or  right > self.width or top > self.height:
             return False
         else:
             return True
@@ -250,8 +253,9 @@ class GameGrid(Container):
         pass
 
     def repaint(self):
-        self._window.repaint_areas.extend(self.actors.draw(self._surface))
+        self._window.repaint_areas.extend(self.actors.draw(self.image))
         if self.dirty == 1:
+            print("in repaint: ", self.image, self.rect)
             self._window.repaint_areas.append(self.rect)
             self.dirty = 0
 
@@ -259,9 +263,7 @@ class GameGrid(Container):
         """
         Startet das Programm.
         """
-        self.actors.clear(self._surface, self.image)
-        print(self.columns, self.rows)
-        self._surface = pygame.Surface((self.width, self.height))
+        self.actors.clear(self.image, self.image)
         self.dirty = 1
         logging.basicConfig(level=logging.WARNING)
         self.window.show()
@@ -302,7 +304,8 @@ class GameGrid(Container):
         :return: centered rectangle
         """
         top_left = self.cell_top_left((position[0], position[1]))
-        new_rect = pygame.Rect(top_left[0],top_left[1],rect.width,rect.height)
+        new_rect = pygame.Rect(0, 0,rect.width,rect.height)
+        new_rect.topleft = top_left
         return new_rect
 
     def pixel_to_cell(self, position: tuple) -> tuple:
@@ -328,3 +331,6 @@ class GameGrid(Container):
     def cell_top_left(self,cell: tuple)->tuple:
         rect = self.cell_to_rect(cell)
         return rect.topleft
+
+    def show_log(self):
+        logging.basicConfig(level=logging.INFO)
