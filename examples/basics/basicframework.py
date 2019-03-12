@@ -4,7 +4,7 @@ from gamegridp import *
 class MyGrid(CellGrid):
 
     def __init__(self):
-        super().__init__(cell_size=16, columns=40, rows=16, margin=1)
+        super().__init__(cell_size=42, columns=20, rows=8, margin=1)
         self.add_image(img_path="images/soccer_green.jpg")
         player1 = Player( )
         self.add_actor(player1, position=(3, 3))
@@ -24,4 +24,5 @@ class Player(Actor):
 
 
 my_grid = MyGrid()
+my_grid.speed = 40
 my_grid.show()

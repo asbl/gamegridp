@@ -1,6 +1,8 @@
 import pygame
 import math
 import logging
+import sys
+
 
 class ImageRenderer():
     """
@@ -12,10 +14,13 @@ class ImageRenderer():
     def __init__(self):
         # not mutable
         self._images_list = []  # Original images
+        self._image_paths = []
         self._image_index = 0 # current_image index (for animations)
-        self.image_actions = {"flip" : True, "rotate" : True, "scale_x" : True, "scale_y" : True, "show_overlay": False, "center" : False}
+        self.image_actions = {"flip" : True, "rotate" : True, "scale_x" : True, "scale_y" : True, "info_overlay": True, "center" : False, "grid_overlay": False}
         self.direction = 0
         self.size = (0,0)
+        self.margin = 0
+        self.cell_size = 0
         self.flipped = True
 
     def add_image(self, img_path: str) -> pygame.Surface:
@@ -24,7 +29,7 @@ class ImageRenderer():
         :param img_path:  the image path
         :return: the image added
         """
-        if img_path in ImageRenderer.images_dict:
+        if img_path in ImageRenderer.images_dict :
             # load image from img_dict
             _image = ImageRenderer.images_dict[img_path]
         else :
@@ -32,35 +37,43 @@ class ImageRenderer():
             _image = pygame.image.load(img_path).convert_alpha()
             ImageRenderer.images_dict[img_path] = _image
         self._images_list.append(_image)
+        self._image_paths.append(img_path)
         return _image
+
+    def load_image_by_index(self, index):
+        if (self.image_actions["info_overlay"] is True):
+            image = pygame.image.load(self._image_paths[index]).convert_alpha()
+        else:
+            image = self._images_list[self._image_index]
+        return image
 
     def get_image(self) -> pygame.Surface:
         try:
             if self._images_list:
-                image =  self._images_list[self._image_index]
+                image = self.load_image_by_index(self._image_index)
             else:
                 image = pygame.Surface((1,1))
-            if  self.image_actions["show_overlay"] == True:
-                image = self.draw_direction_overlay(image, (255, 255, 0), self.direction)
-            if self.image_actions["scale_x"] == True:
+            if self.image_actions["info_overlay"] is True:
+                image = self.draw_direction_overlay(image, (255, 0, 0), self.direction)
+            if self.image_actions["grid_overlay"] is True:
+                image = self.draw_grid_overlay(image, self.size[0], self.size[1], self.cell_size, self.cell_size, self.margin)
+            if self.image_actions["scale_x"] is True:
                 image = self.scale_x_image(image, self.size[0])
-            if self.image_actions["scale_y"] == True:
+            if self.image_actions["scale_y"] is True:
                 image = self.scale_y_image(image, self.size[1])
-            if self.image_actions["center"] == True:
-                image = self.center_image(image, self.size)
-            if self.image_actions["flip"] == True:
+            if self.image_actions["center"] is True:
+                image = self.center_image(image, self.size[0])
+            if self.image_actions["flip"] is True:
                 image = self.flip_image(image, self.flipped, False)
-            if self.image_actions["rotate"] == True:
+            if self.image_actions["rotate"] is True:
                 image = self.rotate_image(image, self.direction)
-            print(image)
             return image
-        except KeyError as E:
+        except KeyError as e:
             self.log.error("Invalid  value for image_action in ImageRenderer")
-
-
+            print(e)
+            sys.exit(1)
 
     def flip_image(self, image, flip_x : bool, flip_y : bool) -> pygame.Surface:
-        print("image (in flip),",image)
         return pygame.transform.flip(image, flip_y, flip_x)
 
     def rotate_image(self, image, direction):
@@ -93,19 +106,17 @@ class ImageRenderer():
 
     def draw_direction_overlay(self, image, color, direction):
         pygame.draw.rect(image, color,
-                         (0, 0, image.get_width(), image.get_height()), 2)
+                         (0, 0, image.get_width()-2, image.get_height()-2), 2)
         # draw direction marker on image
-        center_x = image.get_width() / 2
-        center_y = image.get_height() / 2
-        x = round(image.get_width() / 2 + math.cos(math.radians(direction))
-                  * image.get_width())
-        y = round(image.get_height() / 2 - math.sin(math.radians(direction))
-                  * image.get_height())
-        pygame.draw.line(image, color, (center_x, center_y), (x, y))
+        rect = image.get_rect()
+        center = rect.center
+        x = rect.right
+        y = rect.centery
+        pygame.draw.line(image, color, (center[0], center[1]), (x, y))
         return image
 
     @staticmethod
-    def draw_grid_overlay(image, width, height, cell_width, cell_height, color, cell_margin):
+    def draw_grid_overlay(image, width, height, cell_width, cell_height, cell_margin, color = (255,0,0)):
             i = 0
             while i <= width:
                 pygame.draw.rect(image, color,[i, 0, cell_margin, height])
@@ -114,6 +125,7 @@ class ImageRenderer():
             while i <= height:
                 pygame.draw.rect(image, color, [0, i, width, cell_margin])
                 i += cell_width + cell_margin
+            return image
 
     @staticmethod
     def set_text(self, image, text, size):

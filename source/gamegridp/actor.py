@@ -64,8 +64,8 @@ class Actor(pygame.sprite.DirtySprite):
             self._renderer.direction = self.direction
             self._renderer.size = self.size
             self._renderer.flipped = self.__flip_x
-            image = self._renderer.get_image()
-            return image
+            self._image = self._renderer.get_image()
+            return self._image
 
     @property
     def rect(self):
@@ -219,10 +219,9 @@ class Actor(pygame.sprite.DirtySprite):
 
         :return: Die neue Richtung in Grad.
         """
-        print("turn left", self.direction, degrees)
+        self.log.info("turn left", self.direction, degrees)
         direction = self.direction + degrees
         self.direction = direction
-        print("turn left", self.direction, degrees)
         return self.direction
 
     def turn_right(self, degrees: int = 90):
@@ -233,6 +232,7 @@ class Actor(pygame.sprite.DirtySprite):
 
         :return: Neue Richtung in Grad.
         """
+        self.log.info("turn right", self.direction, degrees)
         direction = self.direction - degrees
         self.direction = direction
         return self.direction
@@ -241,7 +241,7 @@ class Actor(pygame.sprite.DirtySprite):
         self.direction = self._value_to_direction(direction)
         destination = self.look(direction, distance)
         self.position = self.grid.pixel_to_cell(destination.topleft)
-        self.log.info("Move to position {0}".format(self.position))
+        self.log.info("Move to position {0}; Direction {1}".format(self.position, self.direction))
         return self.position
 
     def look(self, direction: str = "forward", distance: int = 1) -> pygame.Rect:

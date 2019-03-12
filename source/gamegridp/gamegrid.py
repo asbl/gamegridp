@@ -24,6 +24,7 @@ class GameGrid(Container):
         self.is_static = False
         # private
         self._renderer = ImageRenderer()
+        self.set_image_action("info_overlay", False)
         self._show_info_overlay = False
         self._actors = pygame.sprite.LayeredDirty()
         self._key_pressed = False
@@ -90,7 +91,8 @@ class GameGrid(Container):
         if self.dirty == 0:
             return self._container_height
         else:
-            self._container_height = self.rows * self._cell_size + (self.columns + 1) * self._cell_margin
+            self._container_height = self.rows * self._cell_size + (self.rows + 1) * self._cell_margin
+            print ("Dimensions: ",self._container_width, self._container_height)
             return self._container_height
 
     @property
@@ -149,7 +151,7 @@ class GameGrid(Container):
     def class_name(self) -> str:
         return self.__class__.__name__
 
-    def image_action(self, attribute : str, value : bool):
+    def set_image_action(self, attribute : str, value : bool):
             self._renderer.image_actions[attribute] = value
 
     def add_image(self, img_path: str):
@@ -161,6 +163,8 @@ class GameGrid(Container):
             return self._image
         else:
             self._renderer.size = (self._container_width, self._container_height)
+            self._renderer.cell_size = self.cell_size
+            self._renderer.margin = self.cell_margin
             _image = self._renderer.get_image()
             self._image = _image
             return _image
