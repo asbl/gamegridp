@@ -245,10 +245,13 @@ class Actor(pygame.sprite.DirtySprite):
         return self.position
 
     def look(self, direction: str = "forward", distance: int = 1) -> pygame.Rect:
-        direction = self._value_to_direction(direction)
-        x = (self.position[0] + round(math.cos(math.radians(direction))) * distance)
-        y = (self.position[1] - round(math.sin(math.radians(direction))) * distance)
-        return self.grid.map_rect_to_position((x, y), self.rect)
+        if direction == "here":
+            return self.rect
+        else:
+            direction = self._value_to_direction(direction)
+            x = (self.position[0] + round(math.cos(math.radians(direction))) * distance)
+            y = (self.position[1] - round(math.sin(math.radians(direction))) * distance)
+            return self.grid.map_rect_to_position((x, y), self.rect)
 
     def update(self):
         self._next_sprite()

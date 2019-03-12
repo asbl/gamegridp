@@ -23,14 +23,14 @@ class CellGrid(GameGrid):
     def get_colliding_actors(self, actor: Actor) -> list:
         self._update_actors_positions()
         x, y = actor.position[0], actor.position[1]
-        colliding_actors = self.actors_at_position((x, y))
+        colliding_actors = self.actors_in_area(actor.rect)
         if actor in colliding_actors:
             colliding_actors.remove(actor)
         return colliding_actors
 
-    def actors_at_position(self, position: tuple) -> list:
+    def actors_in_area(self, area: pygame.Rect) -> list:
         self._update_actors_positions()
-        x, y = position[0], position[1]
+        x,y = self.pixel_to_cell(area.topleft)
         actors = []
         if self.is_in_grid(self.map_rect_to_position((x,y), self.rect)):
             if self._dynamic_actors_dict[x, y]:

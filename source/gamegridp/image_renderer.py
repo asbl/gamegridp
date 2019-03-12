@@ -16,7 +16,7 @@ class ImageRenderer():
         self._images_list = []  # Original images
         self._image_paths = []
         self._image_index = 0 # current_image index (for animations)
-        self.image_actions = {"flip" : True, "rotate" : True, "scale_x" : True, "scale_y" : True, "info_overlay": True, "center" : False, "grid_overlay": False}
+        self.image_actions = {"flip" : True, "rotate" : True, "scale_x" : True, "scale_y" : True, "info_overlay": False, "center" : False, "grid_overlay": False}
         self.direction = 0
         self.size = (0,0)
         self.margin = 0
