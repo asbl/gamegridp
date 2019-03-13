@@ -1,7 +1,7 @@
-from gamegridp import gamegrid
+from gamegridp import *
 import pygame
 
-class PixelGrid(gamegrid.GameGrid):
+class PixelGrid(GameGrid):
     """
     Das Pixel-Grid ist gedacht für Grids, deren Zellen genau 1 Pixel groß sind, d.h.
     für Spiele in denen Pixelgenaue Informationen wichtig sind.
@@ -17,6 +17,13 @@ class PixelGrid(gamegrid.GameGrid):
     def add_collision_partner(self, partner1, partner2):
         partner1.add_collision_partner(partner2)
         partner2.add_collision_partner(partner1)
+
+    def add_actor(self, actor: Actor, position) -> Actor:
+        super().add_actor(actor, position)
+        if actor.size == (0, 0):
+            actor.size = (30, 30)
+        return actor
+
 
     def _call_collision_events(self):
         new_col_pairs = []

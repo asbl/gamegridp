@@ -8,11 +8,12 @@ class CellGrid(GameGrid):
     """
     Das Cell-Grid ist gedacht für Grids, deren Zellen größer als 1 Pixel sind.
     """
-    def __init__(self, cell_size=1, columns=40, rows=40, margin=0):
+    def __init__(self, cell_size=1, columns=20, rows=16, margin=0):
         super().__init__(cell_size = cell_size, columns= columns, rows = rows, margin = margin)
-        self._dynamic_actors_dict = defaultdict(list)
+        self._dynamic_actors_dict = defaultdict(list) # the dict is regularly updated
+        self._dynamic_actors = [] # List with all dynamic actors
         self._static_actors_dict = defaultdict(list)
-        self._dynamic_actors = []
+
 
     def _update_actors_positions(self) -> None:
         self._dynamic_actors_dict.clear()
@@ -29,14 +30,17 @@ class CellGrid(GameGrid):
         return colliding_actors
 
     def actors_in_area(self, area: pygame.Rect) -> list:
+        self._dynamic_actors_dict.clear()
         self._update_actors_positions()
-        x,y = self.pixel_to_cell(area.topleft)
+        x, y = self.pixel_to_cell(area.topleft)
+        self.log.info("x {0},y {1}".format(x,y))
         actors = []
-        if self.is_in_grid(self.map_rect_to_position((x,y), self.rect)):
+        if self.is_in_grid(self.rect):
             if self._dynamic_actors_dict[x, y]:
                 actors.extend(self._dynamic_actors_dict[(x, y)])
             if self._static_actors_dict[x, y]:
                 actors.extend(self._static_actors_dict[(x, y)])
+        self.log.info("actors:" + str(actors))
         return actors
 
     def remove_actor(self, actor: Actor)-> None:
@@ -64,15 +68,13 @@ class CellGrid(GameGrid):
 
     def add_actor(self, actor: Actor, position : tuple = None) -> Actor:
         if actor.is_static:
-            self._static_actors_dict[(actor.x, actor.y)].append(actor)
+            self._static_actors_dict[(position[0], position[1])].append(actor)
         else:
             self._dynamic_actors.append(actor)
         super().add_actor(actor, position)
         if actor.size == (0, 0):
             actor.size = (self.cell_size, self.cell_size)
         return actor
-
-
 
     def update_actor(self, actor : Actor, attribute, value):
         if attribute == "is_static" and value is True:

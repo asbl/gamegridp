@@ -21,6 +21,7 @@ class ImageRenderer():
         self.size = (0,0)
         self.margin = 0
         self.cell_size = 0
+        self.orientation = 0
         self.flipped = True
 
     def add_image(self, img_path: str) -> pygame.Surface:
@@ -41,7 +42,7 @@ class ImageRenderer():
         return _image
 
     def load_image_by_index(self, index):
-        if (self.image_actions["info_overlay"] is True):
+        if self.image_actions["info_overlay"] is True:
             image = pygame.image.load(self._image_paths[index]).convert_alpha()
         else:
             image = self._images_list[self._image_index]
@@ -53,6 +54,7 @@ class ImageRenderer():
                 image = self.load_image_by_index(self._image_index)
             else:
                 image = pygame.Surface((1,1))
+            image = self.rotate_image(image, self.orientation)
             if self.image_actions["info_overlay"] is True:
                 image = self.draw_direction_overlay(image, (255, 0, 0), self.direction)
             if self.image_actions["grid_overlay"] is True:
@@ -70,7 +72,6 @@ class ImageRenderer():
             return image
         except KeyError as e:
             self.log.error("Invalid  value for image_action in ImageRenderer")
-            print(e)
             sys.exit(1)
 
     def flip_image(self, image, flip_x : bool, flip_y : bool) -> pygame.Surface:

@@ -32,7 +32,6 @@ class Toolbar(Container):
                         widget.height = 30
                         widget.repaint()
                         self.surface.blit(widget.surface, (0, 0))
-                        print("blitted")
                         widget.dirty = 0
                 self.dirty = 0
                 self._window.repaint_areas.append(self.rect)

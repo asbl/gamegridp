@@ -42,6 +42,7 @@ class Actor(pygame.sprite.DirtySprite):
         self.is_static = False
         self.is_animated = False
         self.direction = 0
+        self.orientation = 0
         self.grid = None
 
     def add_collision_partner(self, partner):
@@ -63,6 +64,7 @@ class Actor(pygame.sprite.DirtySprite):
         else:
             self._renderer.direction = self.direction
             self._renderer.size = self.size
+            self._renderer.orientation = self.orientation
             self._renderer.flipped = self.__flip_x
             self._image = self._renderer.get_image()
             return self._image
@@ -73,13 +75,15 @@ class Actor(pygame.sprite.DirtySprite):
             return self.grid.map_rect_to_position(self.position, self.image.get_rect())
         except AttributeError as e:
             if self.grid is None:
-                traceback.print_stack()
                 self.log.error("ERROR: The actor {0} is not in a grid\n"
                                 "Maybe you forgot to add the actor with the grid.add_actor function ".format(self))
                 sys.exit(1)
 
     def add_image(self, img_path: str) -> pygame.Surface:
         return self._renderer.add_image(img_path)
+
+    def clear(self):
+        self._renderer = image_renderer.ImageRenderer()
 
     def _next_sprite(self):
         if self.grid.frame % self.animation_speed == 0:
@@ -249,8 +253,8 @@ class Actor(pygame.sprite.DirtySprite):
             return self.rect
         else:
             direction = self._value_to_direction(direction)
-            x = (self.position[0] + round(math.cos(math.radians(direction))) * distance)
-            y = (self.position[1] - round(math.sin(math.radians(direction))) * distance)
+            x = (self.position[0] + round(math.cos(math.radians(direction)) * distance))
+            y = (self.position[1] - round(math.sin(math.radians(direction)) * distance))
             return self.grid.map_rect_to_position((x, y), self.rect)
 
     def update(self):

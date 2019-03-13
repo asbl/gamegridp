@@ -1,7 +1,9 @@
 import pygame
-
+import logging
 
 class ToolbarWidget():
+
+    log = logging.getLogger("toolbar")
 
     def __init__(self):
         self.myfont = pygame.font.SysFont("monospace", 15)
@@ -53,8 +55,6 @@ class ToolbarWidget():
         if self._border:
             border_rect = pygame.Rect(0, 0, self.width, self.height - 2)
             pygame.draw.rect(self.surface, self.background_color, border_rect, self.width)
-        print("fill widget surface...")
-
         self.dirty = 1
 
     def set_text(self, text):
@@ -63,6 +63,7 @@ class ToolbarWidget():
 
     def set_image(self, img_path):
         self._img_path = img_path
+        self._text_padding = 25
         self.dirty = 1
 
     def set_border(self, color, width):
@@ -72,15 +73,19 @@ class ToolbarWidget():
 
 class ToolbarButton(ToolbarWidget):
 
-    def __init__(self, text):
+    log = logging.getLogger("toolbar-button")
+
+    def __init__(self, text, img_path=None):
         super().__init__()
         self.set_text(text)
         self.event = "button"
+        if img_path != None:
+            self.set_image(img_path)
         self.data = text
 
     def get_event(self, event, data):
-        self.parent.window.send_event_to_containers(self.event, self._text)
 
+        self.parent.window.send_event_to_containers(self.event, self._text)
 
 
 class ToolbarLabel(ToolbarWidget):

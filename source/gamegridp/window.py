@@ -1,9 +1,13 @@
 import pygame
+import logging
 from gamegridp import keys
 import os
 
 
 class GameGridWindow:
+
+    log = logging.getLogger("Window")
+
     def __init__(self, title):
         self.title = title
         self._containers = []
@@ -14,7 +18,6 @@ class GameGridWindow:
         pygame.display.set_caption(title)
 
     def show(self):
-        print(self.window_width, self.window_height)
         self.window_surface = pygame.display.set_mode((self.window_width, self.window_height))
         while not self._quit:
             self.update()
@@ -72,7 +75,6 @@ class GameGridWindow:
 
     def get_container_by_pixel(self, pixel_x: int, pixel_y: int):
         for container in self._containers:
-            print(pixel_x, pixel_y)
             if container.rect.collidepoint((pixel_x, pixel_y)):
                 return container
         return None
@@ -102,6 +104,7 @@ class GameGridWindow:
         return False
 
     def send_event_to_containers(self, event, data):
+        self.log.info("Send event '{0}' with text:'[{1}'".format(event, data))
         for container in self._containers:
             container.pass_event(event, data)
             container.get_event(event,data)

@@ -48,6 +48,7 @@ class GameGrid(Container):
         self._window = GameGridWindow("Gamegrid")
         self._window.add_container(self, "main")
 
+
     def set_size(self, cell_size=1, columns=40, rows=40, margin=0):
         self.cell_size = cell_size
         self._columns = columns
@@ -92,7 +93,6 @@ class GameGrid(Container):
             return self._container_height
         else:
             self._container_height = self.rows * self._cell_size + (self.rows + 1) * self._cell_margin
-            print ("Dimensions: ",self._container_width, self._container_height)
             return self._container_height
 
     @property
@@ -169,7 +169,7 @@ class GameGrid(Container):
             self._image = _image
             return _image
 
-    def add_actor(self, actor: Actor, position=None) -> Actor:
+    def add_actor(self, actor: Actor, position) -> Actor:
         """
         adds actor to grid
         :param actor: the actor as subclass of Actor
@@ -259,7 +259,6 @@ class GameGrid(Container):
     def repaint(self):
         self._window.repaint_areas.extend(self.actors.draw(self.image))
         if self.dirty == 1:
-            print("in repaint: ", self.image, self.rect)
             self._window.repaint_areas.append(self.rect)
             self.dirty = 0
 

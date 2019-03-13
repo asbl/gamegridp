@@ -9,7 +9,6 @@ class MyGrid(CellGrid, GUIGrid,  AudioGrid):
             for j in range(self.columns):
                 self.add_actor(Grass(), (j, i))
         wall = self.add_actor(Wall(),(0,4))
-        print("wp:", wall.position)
         self.add_actor(Wall(), (1, 4))
         self.add_actor(Wall(), (2, 4))
         self.add_actor(Wall(), (3, 4))
@@ -20,14 +19,14 @@ class MyGrid(CellGrid, GUIGrid,  AudioGrid):
         self.add_actor(Wall(), (6, 1))
         self.add_actor(Wall(), (6, 3))
         self.torch = self.add_actor(Torch(), (10, 4))
-        self.add_actor(Fireplace(), (10, 14))
+        self.fireplace = self.add_actor(Fireplace(), (10, 14))
         self.door = self.add_actor(Door(), (6,2))
         self.add_actor(Player(), (8, 2))
         self.play_music("rpgsounds/bensound-betterdays.mp3")
-        toolbar = Toolbar()
-        self._window.add_container(toolbar, "right")
-        #console = Toolbar()
-        #self._window.add_container(console, "bottom")
+        self.toolbar = Toolbar()
+        self._window.add_container(self.toolbar, "right")
+        self.console = Console()
+        self._window.add_container(self.console, "bottom")
 
 
 class Player(Actor):
@@ -35,6 +34,7 @@ class Player(Actor):
     def __init__(self):
         super().__init__()
         self.add_image("rpgimages/knight.png")
+        self.image_action("rotate", False)
         self.inventory = []
 
     def act(self):
@@ -51,13 +51,11 @@ class Player(Actor):
             elif "D" in data:
                 self.move("right")
         actors_at_position = self.grid.actors_in_area(self.look("here"))
-        #elif event == "button" and data == "Fackel":
-        #     fireplace = self.get_colliding_actors("Fireplace")
-        #    if fireplace:
-        #        self.grid.console.print("Du zündest die Feuerstelle an.")
-        #        fireplace.burn()
-        # was a torch found?
         print(actors_at_position)
+        if event == "button" and data == "Fackel":
+            if self.grid.fireplace in actors_at_position:
+                self.grid.console.print("Du zündest die Feuerstelle an.")
+                self.grid.fireplace.burn()
         if self.grid.torch in actors_at_position:
             message = "Du findest eine Fackel. Möchtest du sie aufheben?"
             choices = ["Ja", "Nein"]
@@ -66,10 +64,9 @@ class Player(Actor):
                 self.inventory.append("Torch")
                 self.grid.torch.remove()
                 self.grid.console.print("Du hebst die Fackel auf.")
-                self.grid.toolbar.add_button("Fackel", "rpgimages/torch.png")
+                self.grid.toolbar.add_widget(ToolbarButton("Fackel", "rpgimages/torch.png"))
         # look forward
         actors_in_front = self.grid.actors_in_area(self.look("forward"))
-        print(actors_in_front)
         if self.grid.door in actors_in_front:
             if self.grid.door.closed:
                 message = "Die Tür ist geschlossen... möchtest du sie öffnen"
@@ -112,7 +109,7 @@ class Fireplace(Actor):
 
     def burn(self):
         if self.burning == False:
-            self.delete_images()
+            self.clear()
             self.add_image("rpgimages/fireplace_1.png")
             self.add_image("rpgimages/fireplace_2.png")
             self.grid.play_sound("rpgsounds/fireplace.wav")
@@ -131,6 +128,7 @@ class Door(Actor):
 
     def open(self):
         if self.closed == True:
+            self.clear()
             self.add_image("rpgimages/door_open.png")
             self.grid.play_sound("rpgsounds/olddoor.wav")
             self.closed = False
@@ -138,4 +136,5 @@ class Door(Actor):
 
 
 my_grid = MyGrid()
+my_grid.show_log()
 my_grid.show()
