@@ -6,8 +6,8 @@ import math
 class PhysicsActor(actor.Actor):
 
     def __init__(self, *args, **kwargs):
-        self._vector = np.array([1,0])
         super().__init__(*args, **kwargs)
+        self._vector = np.array([1,0])
         self._exact_coordinates = np.array([self.cell[0]+0.0, self.cell[1]+0.0])
 
     def bounce_from_border(self):

@@ -2,38 +2,54 @@ from gamegridp import *
 import pygame
 
 class PixelGrid(GameGrid):
-    """
-    Das Pixel-Grid ist gedacht für Grids, deren Zellen genau 1 Pixel groß sind, d.h.
-    für Spiele in denen Pixelgenaue Informationen wichtig sind.
-    """
 
     def __init__(self, cell_size=1, columns=40, rows=40, margin=0):
         super().__init__(cell_size=cell_size, columns=columns, rows=rows, margin=margin)
-
-    def _init_collisions(self):
+        self._collision_parnters_dict = dict()
         self._collision_partners = dict
         self._last_collisions = set()
 
     def add_collision_partner(self, partner1, partner2):
-        partner1.add_collision_partner(partner2)
-        partner2.add_collision_partner(partner1)
+        self._collision_parnters_dict[partner1.actor_id].add(partner2)
+        self._collision_parnters_dict[partner2.actor_id].add(partner1)
 
     def add_actor(self, actor: Actor, position) -> Actor:
+        """
+        Overwrites add_actor in gamegrid
+        :param actor: The actor to be added
+        :param position: The position where the actor should be placed in the grid
+        :return: The reference to the Actor object
+        """
         super().add_actor(actor, position)
         if actor.size == (0, 0):
             actor.size = (30, 30)
+        self._collision_parnters_dict[actor.actor_id] = pygame.sprite.Group()
         return actor
+
+    def remove_actor(self, actor : Actor):
+        actor_id = actor.actor_id
+        del self._collision_parnters_dict[actor_id]
+        super().remove_actor(actor)
+
 
 
     def _call_collision_events(self):
         new_col_pairs = []
         for partner1 in self.actors:
-            collisions = pygame.sprite.spritecollide(partner1, partner1.collision_partners, False)
-            for partner2 in collisions:
-                if (partner1, partner2) not in self._last_collisions:
-                    partner1.listen("collision",partner2)
-                new_col_pairs.append((partner1, partner2))
+            if partner1.actor_id in  self._collision_parnters_dict:
+                collisions = pygame.sprite.spritecollide(partner1,
+                                                         self._collision_parnters_dict[partner1.actor_id], False)
+                if collisions:
+                    print(collisions)
+                for partner2 in collisions:
+                    if (partner1, partner2) not in self._last_collisions:
+                        partner1.listen("collision",partner2)
+                    new_col_pairs.append((partner1, partner2))
+                for pair in new_col_pairs:
+                    self.window.send_event_to_containers("collision", pair)
         self._last_collisions = set(new_col_pairs)
+
+
 
     def test_collision(self, actor1, actor2) -> bool:
         if actor1 is not actor2:

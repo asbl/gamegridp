@@ -100,11 +100,10 @@ class GameGridWindow:
             keys_pressed = pygame.key.get_pressed()
             self.send_event_to_containers("key", keys.key_codes_to_keys(keys_pressed))
             self.send_event_to_containers("key_pressed", keys.key_codes_to_keys(keys_pressed))
-        mouse_x, mouse_y = pygame.mouse.get_pos()
         return False
 
     def send_event_to_containers(self, event, data):
-        self.log.info("Send event '{0}' with text:'[{1}'".format(event, data))
+        self.log.info("Send event '{0}' with key list: {1}".format(event, data))
         for container in self._containers:
             container.pass_event(event, data)
             container.get_event(event,data)

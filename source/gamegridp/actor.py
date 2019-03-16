@@ -9,10 +9,7 @@ import math
 import pygame
 import gamegridp
 from gamegridp import image_renderer
-from typing import Type
-import sys
 from logging import *
-import traceback
 
 
 class Actor(pygame.sprite.DirtySprite):
@@ -27,15 +24,14 @@ class Actor(pygame.sprite.DirtySprite):
         self._image = self._renderer.get_image()
         self._size = (0, 0)  # Tuple with size
         self._position = (0, 0) # set by gamegrid.add_actor
+        self.actor_id = Actor.actor_count + 1
         # protected
         self.__flip_x = False
         self.__is_in_grid = False
         self.__is_at_border = False
         self.__is_touching_borders = False
         self.__is_colliding = False
-        self.__collision_partners = pygame.sprite.Group()
         self.__colliding_actors = []
-        self.__actor_id = Actor.actor_count + 1
         Actor.actor_count += 1
         # public
         self.animation_speed = 60
@@ -44,15 +40,13 @@ class Actor(pygame.sprite.DirtySprite):
         self.direction = 0
         self.orientation = 0
         self.grid = None
-
-    def add_collision_partner(self, partner):
-        self.__collision_partners.add(partner)
+        self.init = 1
 
     def __str__(self):
         if self.grid:
-            return "Klasse: {0}; ID: {1}, Position: {2}".format(self.class_name , self.__actor_id, self.rect)
+            return "Klasse: {0}; ID: {1}, Position: {2}".format(self.class_name, self.actor_id, self.rect)
         else:
-            return "Klasse: {0}; ID: {1}".format(self.class_name , self.__actor_id)
+            return "Klasse: {0}; ID: {1}".format(self.class_name, self.actor_id)
 
     def image_action(self, attribute : str, value : bool):
             self._renderer.image_actions[attribute] = value
@@ -71,13 +65,13 @@ class Actor(pygame.sprite.DirtySprite):
 
     @property
     def rect(self):
-        try:
-            return self.grid.map_rect_to_position(self.position, self.image.get_rect())
-        except AttributeError as e:
-            if self.grid is None:
-                self.log.error("ERROR: The actor {0} is not in a grid\n"
-                                "Maybe you forgot to add the actor with the grid.add_actor function ".format(self))
-                sys.exit(1)
+       # try:
+            return self.grid.rect_to_position(self.position, self.image.get_rect())
+       # except AttributeError as e:
+       #     if self.grid is None:
+       #         self.log.error("ERROR: The actor {0} is not in a grid\n"
+       #                         "Maybe you forgot to add the actor with the grid.add_actor function ".format(self))
+       #         sys.exit(1)
 
     def add_image(self, img_path: str) -> pygame.Surface:
         return self._renderer.add_image(img_path)
@@ -223,7 +217,7 @@ class Actor(pygame.sprite.DirtySprite):
 
         :return: Die neue Richtung in Grad.
         """
-        self.log.info("turn left", self.direction, degrees)
+        self.log.info("turn left {0} , {1}".format(self.direction, degrees))
         direction = self.direction + degrees
         self.direction = direction
         return self.direction
@@ -236,26 +230,26 @@ class Actor(pygame.sprite.DirtySprite):
 
         :return: Neue Richtung in Grad.
         """
-        self.log.info("turn right", self.direction, degrees)
+        self.log.info("turn right {0} , {1}".format(self.direction, degrees))
         direction = self.direction - degrees
         self.direction = direction
         return self.direction
 
-    def move(self, direction: Union[str,int] = "forward", distance : int = 1) -> tuple:
+    def move(self, *, distance : int = 1, direction: Union[str, int] = "forward") -> tuple:
         self.direction = self._value_to_direction(direction)
-        destination = self.look(direction, distance)
+        destination = self.look(distance = distance, direction = direction)
         self.position = self.grid.pixel_to_cell(destination.topleft)
         self.log.info("Move to position {0}; Direction {1}".format(self.position, self.direction))
         return self.position
 
-    def look(self, direction: str = "forward", distance: int = 1) -> pygame.Rect:
+    def look(self, *, distance: int = 1, direction: Union[str, int] = "here", ) -> pygame.Rect:
         if direction == "here":
             return self.rect
         else:
             direction = self._value_to_direction(direction)
             x = (self.position[0] + round(math.cos(math.radians(direction)) * distance))
             y = (self.position[1] - round(math.sin(math.radians(direction)) * distance))
-            return self.grid.map_rect_to_position((x, y), self.rect)
+            return self.grid.rect_to_position((x, y), self.rect)
 
     def update(self):
         self._next_sprite()
@@ -284,7 +278,9 @@ class Actor(pygame.sprite.DirtySprite):
         """
         Removes this actor from grid
         """
-        self.grid.remove_actor(self)
+        if self.grid:
+            self.grid.remove_actor(self)
+        self.kill()
         del (self)
 
     def _update_status(self):

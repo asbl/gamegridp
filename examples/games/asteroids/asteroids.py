@@ -1,38 +1,39 @@
-import gamegridp
-from gamegridp import keys
+from gamegridp import *
 import random
-import sys
 
-class MyGrid(gamegridp.PixelGrid):
-    """My Grid with custom setup method."""
 
-    def setup(self):
+class MyGrid(PixelGrid):
+
+    def __init__(self):
+        super().__init__( cell_size=1, columns=screen_x, rows=screen_y,
+                margin=0)
         asteroids = list()
         for i in range(5):
-            asteroid=Asteroid(grid=self, cell=(random.randint(30,screen_x-30),random.randint(0+30,screen_y-30)))
+            asteroid = self.add_actor(Asteroid(), position = (random.randint(30,screen_x-30),random.randint(0+30,screen_y-30)))
             asteroids.append(asteroid)
-        self.set_background("images/galaxy.jpg","scale")
-        player1 = Player(grid=self, cell=(40, 40))
+        self.player = self.add_actor(Player(), position = (40,40))
         for asteroid in asteroids:
-            player1.add_collision_partner(asteroid)
+            self.add_collision_partner(self.player,asteroid)
+        self.add_image("images/galaxy.jpg")
 
-    def listen(self, event, data):
+    def get_event(self, event, data):
         if event == "collision":
             partner1, partner2 = data[0], data[1]
-            Explosion(grid=self, cell=partner1.cell)
+            position = partner1.position
             partner1.remove()
             partner2.remove()
+            self.add_actor(Explosion(), position=position)
             self.stop()
 
 
-class Player(gamegridp.Actor):
+class Player(Actor):
 
-    def setup(self):
-        self.add_image("images/ship.png","scale",(30,30))
-        self.set_rotatable()
+    def __init__(self):
+        super().__init__()
+        self.add_image("images/ship.png")
+        self.size = (30,30)
 
-
-    def listen(self,event,data):
+    def get_event(self,event, data):
         if event == "key":
             if "W" in data:
                 self.turn_left(10)
@@ -40,29 +41,32 @@ class Player(gamegridp.Actor):
                 self.turn_right(10)
 
     def act(self):
-        self.move(3)
+        self.move(distance = 3)
 
 
-class Asteroid(gamegridp.Actor):
-    def setup(self):
-        self.set_image("images/asteroid.png","scale",(30,30))
-        self.set_rotatable()
+class Asteroid(Actor):
+    def __init__(self):
+        super().__init__()
+        self.add_image("images/asteroid.png")
+        self.size = (30, 30)
         self.direction = random.randint(0, 360)
-
+        self.image_action("info_overlay", True)
 
     def act(self):
-        valid = self.move(4)
-        if not valid:
+        if not self.grid.is_in_grid(self.look(distance = 4, direction="forward", )):
             self.turn_left(180)
+        else:
+            self.move(distance = 4, direction = "forward")
 
-class Explosion(gamegridp.Actor):
-    def setup(self):
-        self.add_image("images/explosion.png", "do_nothing")
+class Explosion(Actor):
+    def __init__(self):
+        super().__init__()
+        self.add_image("images/explosion.png")
 
 random.seed()
 screen_x=400
 screen_y=300
-MyGrid.log()
-mygrid = MyGrid("My Grid", cell_size=1, columns=screen_x, rows=screen_y,
-                margin=0, speed=60)
+mygrid = MyGrid()
+mygrid.speed = 60
+mygrid.show_log()
 mygrid.show()

@@ -90,9 +90,10 @@ class ToolbarButton(ToolbarWidget):
 
 class ToolbarLabel(ToolbarWidget):
 
-    def __init__(self, width, height, text, img_path, color=(0,255,255), border=(255,255,255)):
+    def __init__(self,text, img_path = None):
         super().__init__()
-        self.set_image(img_path)
+        if img_path != None:
+            self.set_image(img_path)
         self.set_text(text)
         self.event = "label"
         self.data = text

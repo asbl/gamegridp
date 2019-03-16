@@ -26,13 +26,15 @@ class Toolbar(Container):
         if self.dirty:
             self.surface.fill((255,255,255))
             if self.widgets:
+                height = 0
                 for widget in self.widgets:
                     if widget.dirty == 1:
                         widget.width = self._container_width
                         widget.height = 30
                         widget.repaint()
-                        self.surface.blit(widget.surface, (0, 0))
+                        self.surface.blit(widget.surface, (0, height))
                         widget.dirty = 0
+                    height += widget.height
                 self.dirty = 0
                 self._window.repaint_areas.append(self.rect)
 

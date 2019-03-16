@@ -18,7 +18,7 @@ class Player(Actor):
         self.add_image(img_path="images/char_blue.png")
 
     def act(self):
-        if not self.grid.is_in_grid(self.look("forward")):
+        if not self.grid.is_in_grid(self.look(direction = "forward")):
             self.turn_left(90)
         self.move()
 

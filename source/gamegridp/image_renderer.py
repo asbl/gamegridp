@@ -56,9 +56,9 @@ class ImageRenderer():
                 image = pygame.Surface((1,1))
             image = self.rotate_image(image, self.orientation)
             if self.image_actions["info_overlay"] is True:
-                image = self.draw_direction_overlay(image, (255, 0, 0), self.direction)
+                image = self.info_overlay(image, (255, 0, 0))
             if self.image_actions["grid_overlay"] is True:
-                image = self.draw_grid_overlay(image, self.size[0], self.size[1], self.cell_size, self.cell_size, self.margin)
+                image = self.grid_overlay(image, self.size[0], self.size[1], self.cell_size, self.cell_size, self.margin)
             if self.image_actions["scale_x"] is True:
                 image = self.scale_x_image(image, self.size[0])
             if self.image_actions["scale_y"] is True:
@@ -105,9 +105,9 @@ class ImageRenderer():
         cropped_surface.blit(image, (0, 0),(0, 0, size[0], size[1]))
         return cropped_surface
 
-    def draw_direction_overlay(self, image, color, direction):
+    def info_overlay(self, image, color):
         pygame.draw.rect(image, color,
-                         (0, 0, image.get_width()-2, image.get_height()-2), 2)
+                         (0, 0, image.get_rect().width, image.get_rect().height), 10)
         # draw direction marker on image
         rect = image.get_rect()
         center = rect.center
@@ -117,7 +117,7 @@ class ImageRenderer():
         return image
 
     @staticmethod
-    def draw_grid_overlay(image, width, height, cell_width, cell_height, cell_margin, color = (255,0,0)):
+    def grid_overlay(image, width, height, cell_width, cell_height, cell_margin, color = (255, 0, 0)):
             i = 0
             while i <= width:
                 pygame.draw.rect(image, color,[i, 0, cell_margin, height])
