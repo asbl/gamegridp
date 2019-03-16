@@ -7,3 +7,6 @@ install.bat
 upload.bat
 venv_gamegridp
 venv_windows
+source/gamegridp.egg-info
+source/dist
+source/build
