@@ -1,4 +1,4 @@
-from gamegridp import gamegrid
+from boards import gamegrid
 import pygame
 
 class AudioGrid(gamegrid.GameGrid):

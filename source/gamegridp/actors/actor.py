@@ -7,8 +7,7 @@ Created on Mon Apr 16 21:50:48 2018
 from typing import Union
 import math
 import pygame
-import gamegridp
-from gamegridp import image_renderer
+from tools import image_renderer
 from logging import *
 
 
@@ -68,9 +67,9 @@ class Actor(pygame.sprite.DirtySprite):
        # try:
             return self.grid.rect_to_position(self.position, self.image.get_rect())
        # except AttributeError as e:
-       #     if self.grid is None:
-       #         self.log.error("ERROR: The actor {0} is not in a grid\n"
-       #                         "Maybe you forgot to add the actor with the grid.add_actor function ".format(self))
+       #     if self.boards is None:
+       #         self.log.error("ERROR: The actors {0} is not in a boards\n"
+       #                         "Maybe you forgot to add the actors with the boards.add_actor function ".format(self))
        #         sys.exit(1)
 
     def add_image(self, img_path: str) -> pygame.Surface:
@@ -125,10 +124,6 @@ class Actor(pygame.sprite.DirtySprite):
     def position(self, value: tuple):
         self._position = value
         self.changed()
-
-    @property
-    def class_name(self) -> str:
-        return self.__class__.__name__
 
     # Methoden
     def act(self):
@@ -276,7 +271,7 @@ class Actor(pygame.sprite.DirtySprite):
 
     def remove(self):
         """
-        Removes this actor from grid
+        Removes this actors from boards
         """
         if self.grid:
             self.grid.remove_actor(self)
@@ -311,10 +306,6 @@ class Actor(pygame.sprite.DirtySprite):
 
     def get_colliding_actors(self):
         return self.grid.get_colliding_actors(self)
-
-    def is_colliding_with(self, class_name):
-        colliding_actors = self.grid.get_colliding_actors(self)
-        return gamegridp.GameGrid.filter_actor_list(colliding_actors, class_name)
 
     def is_at_border(self):
         return self.grid.is_at_border(self.rect)

@@ -49,9 +49,10 @@ Links
 
 
 
-Indices and tables
+Tabellen
 ==================
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+

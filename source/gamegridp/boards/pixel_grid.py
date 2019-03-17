@@ -1,4 +1,5 @@
-from gamegridp import *
+from gamegridp.boards import *
+from gamegridp.actors import *
 import pygame
 
 class PixelGrid(GameGrid):
@@ -16,8 +17,8 @@ class PixelGrid(GameGrid):
     def add_actor(self, actor: Actor, position) -> Actor:
         """
         Overwrites add_actor in gamegrid
-        :param actor: The actor to be added
-        :param position: The position where the actor should be placed in the grid
+        :param actor: The actors to be added
+        :param position: The position where the actors should be placed in the boards
         :return: The reference to the Actor object
         """
         super().add_actor(actor, position)

@@ -1,6 +1,6 @@
 import os
 import pygame
-from gamegridp import container
+from containers import container
 
 
 class Console(container.Container):

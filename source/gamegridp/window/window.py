@@ -1,6 +1,6 @@
 import pygame
 import logging
-from gamegridp import keys
+from gamegridp.tools import keys
 import os
 
 

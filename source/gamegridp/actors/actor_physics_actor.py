@@ -1,9 +1,9 @@
-from gamegridp import actor
+from gamegridp import actors
 import numpy as np
 import math
 
 
-class PhysicsActor(actor.Actor):
+class PhysicsActor(actors.Actor):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -62,7 +62,7 @@ class PhysicsActor(actor.Actor):
         print("Value-Type",type(value))
         print("Value", value)
         direction = np.degrees(PhysicsActor._angle_between(np.array([1, 0]), value))
-        print("Direction in physics actor:", direction)
+        print("Direction in physics actors:", direction)
         if self._vector[1] > 0:
             self._direction = 360 - direction
         else:

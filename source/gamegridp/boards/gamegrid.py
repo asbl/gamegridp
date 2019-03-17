@@ -1,5 +1,7 @@
 import pygame
-from gamegridp import *
+from gamegridp.containers import *
+from gamegridp.actors import *
+from gamegridp.window import *
 import logging
 from typing import Union
 import sys
@@ -103,7 +105,7 @@ class GameGrid(Container):
     @property
     def width(self) -> int:
         """
-        :return: Returns the width of the grid
+        :return: Returns the width of the boards
         """
         if self.dirty == 0:
             return self._container_width
@@ -114,7 +116,7 @@ class GameGrid(Container):
     @property
     def height(self) -> int:
         """
-        :return: Returns the height of the grid
+        :return: Returns the height of the boards
         """
         if self.dirty == 0:
             return self._container_height
@@ -151,14 +153,14 @@ class GameGrid(Container):
     @property
     def rows(self) -> int:
         """
-        :return: number of rows of the grid
+        :return: number of rows of the boards
         """
         return self._rows
 
     @property
     def columns(self) -> int:
         """
-        :return: number of columns of the grid
+        :return: number of columns of the boards
         """
         return self._columns
 
@@ -208,9 +210,9 @@ class GameGrid(Container):
 
     def add_actor(self, actor: Actor, position : tuple) -> Actor:
         """
-        adds actor to grid
-        :param actor: the actor as subclass of Actor
-        :param position: the position in the grid
+        adds actors to boards
+        :param actor: the actors as subclass of Actor
+        :param position: the position in the boards
         :return: The Actor
         """
         try:
@@ -220,10 +222,10 @@ class GameGrid(Container):
             actor.dirty = 1
             if actor.init != 1:
                 raise UnboundLocalError("Init was not called")
-            self.log.info("Added actor {0} to {1} at position {2} with rect {3}".format(actor, self, actor.position, actor.rect))
+            self.log.info("Added actors {0} to {1} at position {2} with rect {3}".format(actor, self, actor.position, actor.rect))
             return actor
         except UnboundLocalError as e:
-            self.log.error("super().__init__() of actor: {0} was not called".format(actor))
+            self.log.error("super().__init__() of actors: {0} was not called".format(actor))
             raise
 
     def get_actors_by_pixel(self, pixel : tuple) -> list:
@@ -257,9 +259,9 @@ class GameGrid(Container):
 
     def remove_actors_from_location(self, location: Union[tuple, pygame.Rect], actor_type = None):
         """
-        Removes actor from an area or position
+        Removes actors from an area or position
         :param location: The location can be either a Rect or a tuple with cell_coordinates
-        :param actor_type: Filters actor by type (e.g. all <Player>-Objects at position)
+        :param actor_type: Filters actors by type (e.g. all <Player>-Objects at position)
         """
         actors = []
         if type(location) == tuple:

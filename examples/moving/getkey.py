@@ -1,5 +1,4 @@
-from gamegridp import actor
-from gamegridp import gamegrid
+from boards import gamegrid
 import pygame
 
 

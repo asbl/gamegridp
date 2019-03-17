@@ -1,5 +1,7 @@
 from gamegridp import *
 import pygame
+from gamegridp.boards import *
+from gamegridp.actors import *
 from collections import defaultdict
 from typing import Union
 

@@ -1,4 +1,4 @@
-from gamegrid import *
+from boards.gamegrid import *
 
 
 class MyGrid(PixelGrid, GUIGrid):
